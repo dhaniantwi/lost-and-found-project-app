@@ -31,6 +31,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
     reviewClaim,
     deleteItemReport,
     markItemRecovered,
+    showNotification
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'claims' | 'reports' | 'users' | 'logs'>('claims');
@@ -56,10 +57,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
     setCollectionLocation('Central Security Post (North Gate)');
   };
 
-  const handleConfirmReview = () => {
+  const handleConfirmReview = async () => {
     if (!selectedClaimForReview) return;
-    reviewClaim(selectedClaimForReview.id, reviewDecision, reviewNotes, collectionLocation);
-    setSelectedClaimForReview(null);
+    try {
+      await reviewClaim(selectedClaimForReview.id, reviewDecision, reviewNotes, collectionLocation);
+      setSelectedClaimForReview(null);
+    } catch (error: any) {
+      showNotification(error?.message || 'Unable to update this claim.');
+    }
   };
 
   const filteredReports = items.filter((item) => {
