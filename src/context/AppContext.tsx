@@ -372,7 +372,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const { error } = await supabase.from('item_reports').update({ status: 'recovered', resolution_date: new Date().toISOString().slice(0, 10) }).eq('id', claim.item_id);
       if (error) throw error;
     }
-    await addAuditLog(`CLAIM_${status.toUpperCase()}`, claimId, `Administrator reviewed claim as ${status}.`);
     await refreshData();
     showNotification(`Claim ${status}.`);
   };
