@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { ItemReport, Claim, StudentUser, AuditLog, ItemStatus, ClaimStatus, MatchScoreResult } from '../types';
+import { ItemReport, Claim, StudentUser, AuditLog, ItemStatus, ClaimStatus, MatchScoreResult, MatchSuggestion } from '../types';
 import { findAllMatches } from '../utils/matching';
 import { supabase } from '../lib/supabase';
 
@@ -12,6 +12,7 @@ interface AppContextType {
   authUser: User | null;
   auditLogs: AuditLog[];
   matches: MatchScoreResult[];
+  matchSuggestions: MatchSuggestion[];
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (details: { email: string; password: string; fullName: string; studentId: string; phone: string; hallOfResidence: string; department: string }) => Promise<void>;
@@ -30,6 +31,7 @@ interface AppContextType {
     handoverNotes?: string
   ) => Promise<void>;
   markItemRecovered: (itemId: string) => Promise<void>;
+  reviewMatchSuggestion: (suggestionId: string, decision: 'approved' | 'rejected', notes: string) => Promise<void>;
   notification: string | null;
   showNotification: (msg: string) => void;
 }
@@ -79,6 +81,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [users, setUsers] = useState<StudentUser[]>([]);
   const [currentUser, setCurrentUser] = useState<StudentUser | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [matchSuggestions, setMatchSuggestions] = useState<MatchSuggestion[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
 
   const showNotification = useCallback((msg: string) => {
@@ -224,6 +227,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }));
       }
 
+      let suggestions: MatchSuggestion[] = [];
+      if (profile?.role === 'admin') {
+        const { data: suggestionRows, error: suggestionsError } = await supabase
+          .from('match_suggestions')
+          .select('id, lost_report_id, found_report_id, score, evidence, status, created_at, reviewed_at, review_notes')
+          .order('score', { ascending: false })
+          .order('created_at', { ascending: false });
+        if (suggestionsError) throw suggestionsError;
+        suggestions = (suggestionRows || []).map((row: any) => ({
+          id: row.id,
+          lostReportId: row.lost_report_id,
+          foundReportId: row.found_report_id,
+          score: row.score,
+          evidence: Array.isArray(row.evidence) ? row.evidence : [],
+          status: row.status,
+          createdAt: row.created_at,
+          reviewedAt: row.reviewed_at || undefined,
+          reviewNotes: row.review_notes || undefined
+        }));
+      }
+
       let logs: AuditLog[] = [];
       if (profile?.role === 'admin') {
         const { data, error } = await supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(300);
@@ -246,6 +270,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setItems(mappedItems);
       setClaims(mappedClaims);
       setAuditLogs(logs);
+      setMatchSuggestions(suggestions);
     } catch (error: any) {
       showNotification(error?.message || 'Unable to load CampusFind data.');
     } finally {
@@ -290,6 +315,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setClaims([]);
     setUsers([]);
     setAuditLogs([]);
+    setMatchSuggestions([]);
     showNotification('You have signed out.');
   };
 
@@ -411,6 +437,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification(`Claim ${status}.`);
   };
 
+  const reviewMatchSuggestion = async (
+    suggestionId: string,
+    decision: 'approved' | 'rejected',
+    notes: string
+  ) => {
+    if (!authUser || currentUser?.role !== 'admin') throw new Error('Administrator access is required.');
+    if (!notes.trim()) throw new Error('Please provide a decision note.');
+    const { error } = await supabase
+      .from('match_suggestions')
+      .update({ status: decision, review_notes: notes.trim() })
+      .eq('id', suggestionId)
+      .eq('status', 'pending');
+    if (error) throw error;
+    await refreshData();
+    showNotification(`Potential match ${decision}.`);
+  };
+
   const markItemRecovered = async (itemId: string) => {
     await updateItemStatus(itemId, 'recovered');
   };
@@ -420,9 +463,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   return (
     <AppContext.Provider value={{
-      items, claims, users, currentUser, authUser, auditLogs, matches, loading,
+      items, claims, users, currentUser, authUser, auditLogs, matches, matchSuggestions, loading,
       signIn, signUp, signOut, refreshData, addItemReport, updateItemStatus,
-      deleteItemReport, submitClaim, reviewClaim, markItemRecovered,
+      deleteItemReport, submitClaim, reviewClaim, markItemRecovered, reviewMatchSuggestion,
       notification, showNotification
     }}>
       {children}
