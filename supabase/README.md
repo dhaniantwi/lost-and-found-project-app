@@ -62,5 +62,8 @@ The live project records these migrations in Supabase:
 8. `consolidate_catalog_select_policies`
 9. `allow_owners_to_view_archived_reports`
 10. `complete_report_audit_and_prevent_duplicate_claims`
+11. `hide_private_storage_paths_from_public_catalog`
+
+A consolidated fresh-project snapshot is kept at `supabase/migrations/20261110_campusfind_baseline.sql`.
 
 No sample users, reports, claims, or audit rows are seeded into the live database.
