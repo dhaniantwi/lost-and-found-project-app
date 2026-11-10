@@ -39,8 +39,8 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
 
   const isLost = item.type === 'lost';
   const isRecovered = item.status === 'recovered';
-  const isOwner = currentUser.studentId === item.reporterStudentId;
-  const isAdmin = currentUser.role === 'admin';
+  const isOwner = !!currentUser && currentUser.studentId === item.reporterStudentId;
+  const isAdmin = currentUser?.role === 'admin';
 
   // Find candidate matches for this specific item
   const potentialMatches = items
