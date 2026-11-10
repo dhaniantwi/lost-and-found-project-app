@@ -33,11 +33,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
     markItemRecovered,
   } = useApp();
 
-  if (currentUser?.role !== 'admin') return null;
-
   const [activeTab, setActiveTab] = useState<'claims' | 'reports' | 'users' | 'logs'>('claims');
   const [selectedClaimForReview, setSelectedClaimForReview] = useState<Claim | null>(null);
   const [reviewDecision, setReviewDecision] = useState<'approved' | 'rejected' | 'collected'>('approved');
+
+  if (currentUser?.role !== 'admin') return null;
   const [reviewNotes, setReviewNotes] = useState('');
   const [collectionLocation, setCollectionLocation] = useState('Central Security Post (North Gate)');
   const [reportSearch, setReportSearch] = useState('');
