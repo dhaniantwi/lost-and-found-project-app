@@ -38,7 +38,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
 
   // Filter smart matches that relate to items this student lost
   const myLostItems = myReports.filter((i) => i.type === 'lost' && i.status !== 'recovered');
-  const foundItems = items.filter((i) => i.type === 'found' && i.status !== 'recovered');
+  const foundItems = items.filter((i) => i.type === 'found' && (i.status === 'open' || i.status === 'in_review'));
 
   const myMatches: { lost: ItemReport; found: ItemReport; score: number; reasons: string[] }[] = [];
   for (const lost of myLostItems) {
