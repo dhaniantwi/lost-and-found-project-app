@@ -10,7 +10,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenReportModal, onOpenAuthModal }) => {
-  const { currentUser, signOut, matches, showNotification } = useApp();
+  const { currentUser, signOut, notifications, showNotification } = useApp();
 
   const handleSignOut = async () => {
     try {
@@ -34,8 +34,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenR
 
           <nav className="hidden lg:flex items-center gap-5 text-sm font-medium">
             <button onClick={() => setActiveTab('browse')} className={navClass('browse')}>Browse Catalog</button>
-            {currentUser?.role === 'admin' && <button onClick={() => setActiveTab('matches')} className={`${navClass('matches')} inline-flex items-center gap-1.5`}>Potential Matches {matches.length > 0 && <span className="text-[11px] bg-amber-100 text-amber-900 rounded px-1.5">{matches.length}</span>}</button>}
-            {currentUser && <button onClick={() => setActiveTab('my-activity')} className={navClass('my-activity')}>My Claims & Reports</button>}
+            {currentUser && <button onClick={() => setActiveTab('my-activity')} className={navClass('my-activity')}>My Claims & Reports {notifications.some((notification) => !notification.readAt) && <span className="ml-1 rounded-full bg-amber-100 text-amber-900 px-1.5 text-[10px]">{notifications.filter((notification) => !notification.readAt).length}</span>}</button>}
             {currentUser?.role === 'admin' && <button onClick={() => setActiveTab('admin')} className={`${navClass('admin')} inline-flex items-center gap-1.5`}><ShieldCheck className="w-4 h-4" /> Admin Desk</button>}
             <button onClick={() => setActiveTab('project-docs')} className={`${navClass('project-docs')} inline-flex items-center gap-1.5`}><FolderKanban className="w-4 h-4" /> SE Group Hub</button>
           </nav>
@@ -59,8 +58,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenR
 
         <div className="lg:hidden flex items-center gap-2 overflow-x-auto py-2.5 border-t border-slate-100 text-xs">
           <button onClick={() => setActiveTab('browse')} className={`px-2.5 py-1 rounded whitespace-nowrap ${activeTab === 'browse' ? 'bg-blue-900 text-white' : 'text-slate-600'}`}>Catalog</button>
-          {currentUser?.role === 'admin' && <button onClick={() => setActiveTab('matches')} className={`px-2.5 py-1 rounded whitespace-nowrap ${activeTab === 'matches' ? 'bg-blue-900 text-white' : 'text-slate-600'}`}>Matches ({matches.length})</button>}
-          {currentUser && <button onClick={() => setActiveTab('my-activity')} className={`px-2.5 py-1 rounded whitespace-nowrap ${activeTab === 'my-activity' ? 'bg-blue-900 text-white' : 'text-slate-600'}`}>My Items</button>}
+          {currentUser && <button onClick={() => setActiveTab('my-activity')} className={`px-2.5 py-1 rounded whitespace-nowrap ${activeTab === 'my-activity' ? 'bg-blue-900 text-white' : 'text-slate-600'}`}>My Items {notifications.some((notification) => !notification.readAt) ? `(${notifications.filter((notification) => !notification.readAt).length})` : ''}</button>}
           {currentUser?.role === 'admin' && <button onClick={() => setActiveTab('admin')} className={`px-2.5 py-1 rounded whitespace-nowrap ${activeTab === 'admin' ? 'bg-blue-900 text-white' : 'text-slate-600'}`}>Admin Desk</button>}
           <button onClick={() => setActiveTab('project-docs')} className={`px-2.5 py-1 rounded whitespace-nowrap ${activeTab === 'project-docs' ? 'bg-blue-900 text-white' : 'text-blue-900'}`}>SE Hub</button>
         </div>
