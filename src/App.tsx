@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { Header } from './components/Header';
 import { HeroBanner } from './components/HeroBanner';
@@ -19,6 +19,7 @@ function CampusFindApp() {
   const [activeTab, setActiveTab] = useState<string>('browse');
   const [selectedItem, setSelectedItem] = useState<ItemReport | null>(null);
   const [claimingItem, setClaimingItem] = useState<ItemReport | null>(null);
+  const [pendingClaimItem, setPendingClaimItem] = useState<ItemReport | null>(null);
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportModalInitialType, setReportModalInitialType] = useState<ItemType>('lost');
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -36,11 +37,20 @@ function CampusFindApp() {
 
   const handleClaimItem = (item: ItemReport) => {
     if (!currentUser) {
+      setPendingClaimItem(item);
       setAuthModalOpen(true);
       return;
     }
     setClaimingItem(item);
   };
+
+  useEffect(() => {
+    if (currentUser && pendingClaimItem) {
+      setClaimingItem(pendingClaimItem);
+      setPendingClaimItem(null);
+      setAuthModalOpen(false);
+    }
+  }, [currentUser, pendingClaimItem]);
 
   const protectedNotice = (heading: string) => (
     <div className="bg-white border border-slate-200 rounded-2xl p-10 text-center max-w-xl mx-auto">
@@ -101,7 +111,13 @@ function CampusFindApp() {
       <ItemDetailModal item={selectedItem} onClose={() => setSelectedItem(null)} onOpenClaim={handleClaimItem} onSelectRelated={setSelectedItem} />
       <ReportModal isOpen={reportModalOpen} initialType={reportModalInitialType} onClose={() => setReportModalOpen(false)} />
       <ClaimModal isOpen={claimingItem !== null} item={claimingItem} onClose={() => setClaimingItem(null)} />
-      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={(authenticated) => {
+          setAuthModalOpen(false);
+          if (!authenticated) setPendingClaimItem(null);
+        }}
+      />
     </div>
   );
 }
