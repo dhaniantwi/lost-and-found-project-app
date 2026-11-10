@@ -69,6 +69,7 @@ The live project records these migrations in Supabase:
 15. `sync_item_status_after_claim_review`
 16. `restrict_item_photo_access`
 17. `prevent_multiple_approved_claimants`
+18. `prevent_found_item_self_recovery`
 
 A consolidated fresh-project snapshot is kept at `supabase/migrations/20261110_campusfind_baseline.sql`.
 
