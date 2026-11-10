@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { ItemReport, Claim, StudentUser, AuditLog, ItemStatus, ClaimStatus, MatchScoreResult, MatchSuggestion } from '../types';
+import { ItemReport, Claim, StudentUser, AuditLog, ItemStatus, ClaimStatus, MatchScoreResult, MatchSuggestion, UserNotification } from '../types';
 import { findAllMatches } from '../utils/matching';
 import { supabase } from '../lib/supabase';
 
@@ -13,6 +13,7 @@ interface AppContextType {
   auditLogs: AuditLog[];
   matches: MatchScoreResult[];
   matchSuggestions: MatchSuggestion[];
+  notifications: UserNotification[];
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (details: { email: string; password: string; fullName: string; studentId: string; phone: string; hallOfResidence: string; department: string }) => Promise<void>;
@@ -32,6 +33,7 @@ interface AppContextType {
   ) => Promise<void>;
   markItemRecovered: (itemId: string) => Promise<void>;
   reviewMatchSuggestion: (suggestionId: string, decision: 'approved' | 'rejected', notes: string) => Promise<void>;
+  markNotificationRead: (notificationId: string) => Promise<void>;
   notification: string | null;
   showNotification: (msg: string) => void;
 }
@@ -82,6 +84,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [currentUser, setCurrentUser] = useState<StudentUser | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [matchSuggestions, setMatchSuggestions] = useState<MatchSuggestion[]>([]);
+  const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
 
   const showNotification = useCallback((msg: string) => {
@@ -248,6 +251,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }));
       }
 
+      let userNotifications: UserNotification[] = [];
+      if (authUser) {
+        const { data: notificationRows, error: notificationsError } = await supabase
+          .from('user_notifications')
+          .select('id, title, message, related_report_id, match_suggestion_id, created_at, read_at')
+          .order('created_at', { ascending: false })
+          .limit(50);
+        if (notificationsError) throw notificationsError;
+        userNotifications = (notificationRows || []).map((row: any) => ({
+          id: row.id,
+          title: row.title,
+          message: row.message,
+          relatedReportId: row.related_report_id || undefined,
+          matchSuggestionId: row.match_suggestion_id || undefined,
+          createdAt: row.created_at,
+          readAt: row.read_at || undefined
+        }));
+      }
+
       let logs: AuditLog[] = [];
       if (profile?.role === 'admin') {
         const { data, error } = await supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(300);
@@ -271,6 +293,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setClaims(mappedClaims);
       setAuditLogs(logs);
       setMatchSuggestions(suggestions);
+      setNotifications(userNotifications);
     } catch (error: any) {
       showNotification(error?.message || 'Unable to load CampusFind data.');
     } finally {
@@ -316,6 +339,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUsers([]);
     setAuditLogs([]);
     setMatchSuggestions([]);
+    setNotifications([]);
     showNotification('You have signed out.');
   };
 
@@ -456,6 +480,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification(`Potential match ${decision}.`);
   };
 
+  const markNotificationRead = async (notificationId: string) => {
+    if (!authUser) throw new Error('Please sign in to view notifications.');
+    const readAt = new Date().toISOString();
+    const { error } = await supabase
+      .from('user_notifications')
+      .update({ read_at: readAt })
+      .eq('id', notificationId)
+      .eq('user_id', authUser.id)
+      .is('read_at', null)
+      .select('id')
+      .single();
+    if (error) throw error;
+    setNotifications((current) => current.map((notification) =>
+      notification.id === notificationId ? { ...notification, readAt } : notification
+    ));
+  };
+
   const markItemRecovered = async (itemId: string) => {
     await updateItemStatus(itemId, 'recovered');
   };
@@ -465,9 +506,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   return (
     <AppContext.Provider value={{
-      items, claims, users, currentUser, authUser, auditLogs, matches, matchSuggestions, loading,
+      items, claims, users, currentUser, authUser, auditLogs, matches, matchSuggestions, notifications, loading,
       signIn, signUp, signOut, refreshData, addItemReport, updateItemStatus,
-      deleteItemReport, submitClaim, reviewClaim, markItemRecovered, reviewMatchSuggestion,
+      deleteItemReport, submitClaim, reviewClaim, markItemRecovered, reviewMatchSuggestion, markNotificationRead,
       notification, showNotification
     }}>
       {children}
