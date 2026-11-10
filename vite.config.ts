@@ -5,6 +5,8 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    // GitHub Pages serves this project from a repository subpath, not the domain root.
+    base: '/lost-and-found-project-app/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
