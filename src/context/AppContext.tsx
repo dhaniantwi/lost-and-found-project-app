@@ -80,6 +80,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   useEffect(() => {
+    // Remove obsolete browser-only demo records from earlier CampusFind builds.
+    try {
+      ['campusfind_items_v1', 'campusfind_claims_v1', 'campusfind_users_v1', 'campusfind_current_user_id_v1', 'campusfind_logs_v1']
+        .forEach((key) => localStorage.removeItem(key));
+    } catch {
+      // Storage may be unavailable in restricted browser contexts.
+    }
+  }, []);
+
+  useEffect(() => {
     let active = true;
     supabase.auth.getSession().then(({ data, error }) => {
       if (!active) return;
@@ -239,6 +249,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       email: details.email.trim(),
       password: details.password,
       options: {
+        emailRedirectTo: new URL(import.meta.env.BASE_URL, window.location.origin).toString(),
         data: {
           full_name: details.fullName.trim(),
           student_id: details.studentId.trim(),
