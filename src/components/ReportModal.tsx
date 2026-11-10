@@ -253,7 +253,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             ) : (
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Current Storage / Custody Location *
+                  Current Storage / Custody Location (Private) *
                 </label>
                 <input
                   type="text"
@@ -269,19 +269,19 @@ export const ReportModal: React.FC<ReportModalProps> = ({
           {/* Description */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              General Description *
+              Public Item Description *
             </label>
             <textarea
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Provide a clear description of the item including brand, model, case, visible wear, or lecture context..."
+              placeholder="Describe visible, non-sensitive features such as brand, model, colour, case, or visible wear. Do not include secret serial numbers, student IDs, phone numbers, or private contents."
               className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900/20 focus:border-blue-900 text-slate-900"
             />
             {errors.description && <p className="text-xs text-rose-600 mt-1">{errors.description}</p>}
           </div>
 
-          {/* Distinct Marks */}
+          {/* Confidential Ownership Details (Private) */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
               Distinctive Ownership Marks (Used for Verification)
@@ -290,7 +290,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               type="text"
               value={distinctMarks}
               onChange={(e) => setDistinctMarks(e.target.value)}
-              placeholder="e.g. Scratch on top left, initials 'DA', stickers, specific lockscreen photo"
+              placeholder="Add details only the genuine owner should know, such as a hidden mark, serial number, engraving, or contents. These details are not shown in the public catalogue."
               className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900/20 focus:border-blue-900 text-slate-900"
             />
             <p className="text-[11px] text-slate-400 mt-1">
