@@ -21,7 +21,14 @@ interface AppContextType {
   updateItemStatus: (itemId: string, status: ItemStatus) => Promise<void>;
   deleteItemReport: (itemId: string) => Promise<void>;
   submitClaim: (claimData: { itemId: string; itemTitle: string; itemCategory: any; itemCampusLocation: string; proofDescription: string; proofDocumentUrl?: string }) => Promise<Claim>;
-  reviewClaim: (claimId: string, status: ClaimStatus, adminNotes: string, collectionLocation?: string) => Promise<void>;
+  reviewClaim: (
+    claimId: string,
+    status: ClaimStatus,
+    adminNotes: string,
+    collectionLocation?: string,
+    recipientIdVerified?: boolean,
+    handoverNotes?: string
+  ) => Promise<void>;
   markItemRecovered: (itemId: string) => Promise<void>;
   notification: string | null;
   showNotification: (msg: string) => void;
@@ -206,7 +213,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             submittedAt: row.submitted_at,
             reviewedAt: row.reviewed_at || undefined,
             reviewedBy: row.reviewed_by ? (profileById.get(row.reviewed_by) as StudentUser | undefined)?.fullName : undefined,
-            collectionLocation: row.collection_location || undefined
+            collectionLocation: row.collection_location || undefined,
+            collectedAt: row.collected_at || undefined,
+            collectedBy: row.collected_by || undefined,
+            recipientIdVerified: row.recipient_id_verified || false,
+            handoverNotes: row.handover_notes || undefined
           };
         }));
       }
@@ -365,14 +376,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } as Claim;
   };
 
-  const reviewClaim = async (claimId: string, status: ClaimStatus, adminNotes: string, collectionLocation?: string) => {
+  const reviewClaim = async (
+    claimId: string,
+    status: ClaimStatus,
+    adminNotes: string,
+    collectionLocation?: string,
+    recipientIdVerified = false,
+    handoverNotes?: string
+  ) => {
     if (!authUser || currentUser?.role !== 'admin') throw new Error('Administrator access is required.');
+    if (!adminNotes.trim()) throw new Error('Please enter the administrator's decision notes.');
+    if (status === 'collected') {
+      if (!recipientIdVerified) throw new Error('Verify the recipient's UCC student ID before recording collection.');
+      if (!collectionLocation?.trim()) throw new Error('A collection point is required.');
+      if (!handoverNotes?.trim()) throw new Error('Please record the physical handover details.');
+    }
+    const reviewedAt = new Date().toISOString();
     const { data: claim, error: claimError } = await supabase.from('claims').update({
       status,
-      admin_notes: adminNotes,
-      collection_location: collectionLocation || null,
+      admin_notes: adminNotes.trim(),
+      collection_location: collectionLocation?.trim() || null,
       reviewed_by: authUser.id,
-      reviewed_at: new Date().toISOString()
+      reviewed_at: reviewedAt,
+      collected_at: status === 'collected' ? reviewedAt : null,
+      collected_by: status === 'collected' ? authUser.id : null,
+      recipient_id_verified: status === 'collected' ? recipientIdVerified : false,
+      handover_notes: status === 'collected' ? handoverNotes?.trim() || null : null
     }).eq('id', claimId).select('item_id').single();
     if (claimError) throw claimError;
     if (status === 'approved') {
