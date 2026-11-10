@@ -385,9 +385,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     handoverNotes?: string
   ) => {
     if (!authUser || currentUser?.role !== 'admin') throw new Error('Administrator access is required.');
-    if (!adminNotes.trim()) throw new Error('Please enter the administrator's decision notes.');
+    if (!adminNotes.trim()) throw new Error("Please enter the administrator's decision notes.");
     if (status === 'collected') {
-      if (!recipientIdVerified) throw new Error('Verify the recipient's UCC student ID before recording collection.');
+      if (!recipientIdVerified) throw new Error("Verify the recipient's UCC student ID before recording collection.");
       if (!collectionLocation?.trim()) throw new Error('A collection point is required.');
       if (!handoverNotes?.trim()) throw new Error('Please record the physical handover details.');
     }
@@ -395,7 +395,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const { data: claim, error: claimError } = await supabase.from('claims').update({
       status,
       admin_notes: adminNotes.trim(),
-      collection_location: collectionLocation?.trim() || null,
+      collection_location: status === 'approved' || status === 'collected' ? collectionLocation?.trim() || null : null,
       reviewed_by: authUser.id,
       reviewed_at: reviewedAt,
       collected_at: status === 'collected' ? reviewedAt : null,
@@ -409,6 +409,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (error) throw error;
     } else if (status === 'collected') {
       const { error } = await supabase.from('item_reports').update({ status: 'recovered', resolution_date: new Date().toISOString().slice(0, 10) }).eq('id', claim.item_id);
+      if (error) throw error;
+    } else if (status === 'rejected') {
+      const { count, error: activeClaimsError } = await supabase
+        .from('claims')
+        .select('id', { count: 'exact', head: true })
+        .eq('item_id', claim.item_id)
+        .in('status', ['pending', 'approved']);
+      if (activeClaimsError) throw activeClaimsError;
+      const { error } = await supabase.from('item_reports')
+        .update({ status: (count || 0) > 0 ? 'in_review' : 'open' })
+        .eq('id', claim.item_id);
       if (error) throw error;
     }
     await refreshData();
