@@ -131,7 +131,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
           </div>
 
           {/* Distinct Marks (Private / Key Identifiers) */}
-          {item.distinctMarks && (
+          {(isOwner || isAdmin) && item.distinctMarks && (
             <div>
               <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                 <Shield className="w-3.5 h-3.5 text-blue-900" />
@@ -151,7 +151,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
                 <span>Campus Location</span>
               </div>
               <div className="text-slate-700 font-medium">{item.campusLocation}</div>
-              {item.specificSpot && (
+              {(isOwner || isAdmin) && item.specificSpot && (
                 <div className="text-slate-500 text-[11px]">Spot: {item.specificSpot}</div>
               )}
             </div>
@@ -170,7 +170,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
             </div>
 
             {/* Custody / Holding Point for Found Items */}
-            {!isLost && item.storageLocation && (
+            {!isLost && (isOwner || isAdmin) && item.storageLocation && (
               <div className="sm:col-span-2 bg-emerald-50/60 border border-emerald-200/70 p-3.5 rounded-xl space-y-1">
                 <div className="font-semibold text-emerald-900 flex items-center gap-1.5 text-xs">
                   <Building className="w-4 h-4 text-emerald-700" />
@@ -186,7 +186,8 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
             )}
           </div>
 
-          {/* Reporter Information Section */}
+          {/* Reporter contact information is private to the reporter and administrators. */}
+          {(isOwner || isAdmin) && (
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
             <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <User className="w-3.5 h-3.5 text-slate-500" />
@@ -211,6 +212,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
               </div>
             </div>
           </div>
+          )}
 
           {/* Potential Candidate Matches Section */}
           {potentialMatches.length > 0 && (
@@ -278,7 +280,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
                 }}
                 className="px-5 py-2 text-xs font-semibold text-white bg-blue-900 hover:bg-blue-800 rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
               >
-                <span>Submit Ownership Claim</span>
+                <span>{currentUser ? 'Submit Ownership Claim' : 'Sign in to claim this item'}</span>
               </button>
             )}
           </div>
