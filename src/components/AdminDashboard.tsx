@@ -40,6 +40,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
 
   const [reviewNotes, setReviewNotes] = useState('');
   const [collectionLocation, setCollectionLocation] = useState('Central Security Post (North Gate)');
+  const [recipientIdVerified, setRecipientIdVerified] = useState(false);
   const [reportSearch, setReportSearch] = useState('');
 
   if (currentUser?.role !== 'admin') return null;
@@ -52,15 +53,26 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
 
   const handleOpenReviewModal = (claim: Claim) => {
     setSelectedClaimForReview(claim);
-    setReviewDecision('approved');
-    setReviewNotes('Confidential ownership details and proof verified against physical custody item.');
-    setCollectionLocation('Central Security Post (North Gate)');
+    setReviewDecision(claim.status === 'approved' ? 'collected' : 'approved');
+    setReviewNotes('');
+    setCollectionLocation(claim.collectionLocation || 'Central Security Post (North Gate)');
+    setRecipientIdVerified(false);
   };
 
   const handleConfirmReview = async () => {
     if (!selectedClaimForReview) return;
     try {
-      await reviewClaim(selectedClaimForReview.id, reviewDecision, reviewNotes, collectionLocation);
+      if (!reviewNotes.trim()) throw new Error('Please enter the decision or handover notes.');
+      if (reviewDecision === 'approved' && !collectionLocation.trim()) throw new Error('Enter a collection point for the student.');
+      if (reviewDecision === 'collected' && !recipientIdVerified) throw new Error('Confirm that the claimant’s UCC student ID has been checked.');
+      await reviewClaim(
+        selectedClaimForReview.id,
+        reviewDecision,
+        reviewNotes,
+        collectionLocation,
+        recipientIdVerified,
+        reviewDecision === 'collected' ? reviewNotes : undefined
+      );
       setSelectedClaimForReview(null);
     } catch (error: any) {
       showNotification(error?.message || 'Unable to update this claim.');
@@ -243,7 +255,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
                             onClick={() => handleOpenReviewModal(claim)}
                             className="px-3 py-1 text-xs font-semibold text-white bg-blue-900 hover:bg-blue-800 rounded transition-colors"
                           >
-                            Review & Decide
+                            {claim.status === 'pending' ? 'Review Claim' : claim.status === 'approved' ? 'Record Handover' : 'View Record'}
                           </button>
                         </td>
                       </tr>
@@ -437,44 +449,55 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
                 <label className="block text-xs font-semibold text-slate-800 mb-1">
                   Administrative Action Decision *
                 </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setReviewDecision('approved')}
-                    className={`py-2 text-xs font-bold rounded-lg border transition-all ${
-                      reviewDecision === 'approved'
-                        ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
-                        : 'bg-white text-slate-700 border-slate-200'
-                    }`}
-                  >
-                    ✓ Approve Claim
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setReviewDecision('rejected')}
-                    className={`py-2 text-xs font-bold rounded-lg border transition-all ${
-                      reviewDecision === 'rejected'
-                        ? 'bg-rose-700 text-white border-rose-700 shadow-xs'
-                        : 'bg-white text-slate-700 border-slate-200'
-                    }`}
-                  >
-                    ✕ Reject Claim
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setReviewDecision('collected')}
-                    className={`py-2 text-xs font-bold rounded-lg border transition-all ${
-                      reviewDecision === 'collected'
-                        ? 'bg-blue-900 text-white border-blue-900 shadow-xs'
-                        : 'bg-white text-slate-700 border-slate-200'
-                    }`}
-                  >
-                    ★ Handed Over
-                  </button>
+                <div className="grid grid-cols-2 gap-2">
+                  {selectedClaimForReview.status === 'pending' && (
+                    <button
+                      type="button"
+                      onClick={() => setReviewDecision('approved')}
+                      className={`py-2 text-xs font-bold rounded-lg border transition-all ${
+                        reviewDecision === 'approved'
+                          ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
+                          : 'bg-white text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      ✓ Approve Claim
+                    </button>
+                  )}
+                  {(selectedClaimForReview.status === 'pending' || selectedClaimForReview.status === 'approved') && (
+                    <button
+                      type="button"
+                      onClick={() => setReviewDecision('rejected')}
+                      className={`py-2 text-xs font-bold rounded-lg border transition-all ${
+                        reviewDecision === 'rejected'
+                          ? 'bg-rose-700 text-white border-rose-700 shadow-xs'
+                          : 'bg-white text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      ✕ Reject Claim
+                    </button>
+                  )}
+                  {selectedClaimForReview.status === 'approved' && (
+                    <button
+                      type="button"
+                      onClick={() => setReviewDecision('collected')}
+                      className={`py-2 text-xs font-bold rounded-lg border transition-all ${
+                        reviewDecision === 'collected'
+                          ? 'bg-blue-900 text-white border-blue-900 shadow-xs'
+                          : 'bg-white text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      ★ Record Handover
+                    </button>
+                  )}
+                  {(selectedClaimForReview.status === 'rejected' || selectedClaimForReview.status === 'collected') && (
+                    <p className="col-span-2 text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded-lg p-3">
+                      This claim is closed and can only be viewed. Its status cannot be changed.
+                    </p>
+                  )}
                 </div>
               </div>
 
-              {reviewDecision === 'approved' && (
+              {(reviewDecision === 'approved' || reviewDecision === 'collected') && (
                 <div>
                   <label className="block text-xs font-semibold text-slate-800 mb-1">
                     Designated In-Person Collection Point
@@ -483,20 +506,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
                     type="text"
                     value={collectionLocation}
                     onChange={(e) => setCollectionLocation(e.target.value)}
+                    readOnly={reviewDecision === 'collected'}
                     className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-900 text-slate-800"
                   />
                 </div>
               )}
 
+              {reviewDecision === 'collected' && (
+                <label className="flex items-start gap-2.5 p-3 rounded-lg border border-blue-200 bg-blue-50 text-xs text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={recipientIdVerified}
+                    onChange={(e) => setRecipientIdVerified(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    I confirm that I physically checked the claimant’s original UCC student ID and verified that the person collecting the item is the approved claimant.
+                  </span>
+                </label>
+              )}
+
               <div>
                 <label className="block text-xs font-semibold text-slate-800 mb-1">
-                  Officer Notes & Instructions to Student *
+                  {reviewDecision === 'collected' ? 'Physical Handover Notes *' : 'Officer Notes & Instructions to Student *'}
                 </label>
                 <textarea
                   rows={3}
                   value={reviewNotes}
                   onChange={(e) => setReviewNotes(e.target.value)}
-                  placeholder="Provide verification notes or collection instructions..."
+                  placeholder={reviewDecision === 'collected' ? 'Record the date/time, item condition, and any handover details...' : 'Provide verification notes or collection instructions...'}
                   className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-900 text-slate-800"
                 />
               </div>
@@ -509,12 +547,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
               >
                 Cancel
               </button>
-              <button
-                onClick={handleConfirmReview}
-                className="px-5 py-2 text-xs font-bold text-white bg-blue-900 hover:bg-blue-800 rounded-lg shadow-xs"
-              >
-                Execute Decision
-              </button>
+              {selectedClaimForReview.status === 'pending' || selectedClaimForReview.status === 'approved' ? (
+                <button
+                  onClick={handleConfirmReview}
+                  disabled={!reviewNotes.trim() || (reviewDecision === 'collected' && !recipientIdVerified)}
+                  className="px-5 py-2 text-xs font-bold text-white bg-blue-900 hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-xs"
+                >
+                  {reviewDecision === 'collected' ? 'Confirm Physical Handover' : 'Execute Decision'}
+                </button>
+              ) : null}
             </div>
           </div>
         </div>
