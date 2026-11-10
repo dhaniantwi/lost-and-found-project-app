@@ -17,12 +17,12 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({ item, isOpen, onClose })
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState('');
 
-  if (!isOpen || !item) return null;
+  if (!isOpen || !item || !currentUser) return null;
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
+      if (!['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(file.type) || file.size > 5 * 1024 * 1024) {\n        setError('Choose a JPG, PNG, WebP, or PDF file no larger than 5MB.');\n        return;\n      }\n      const reader = new FileReader();
       reader.onload = () => {
         if (typeof reader.result === 'string') {
           setProofDocumentUrl(reader.result);
@@ -32,7 +32,7 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({ item, isOpen, onClose })
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!proofDescription.trim() || proofDescription.length < 15) {
       setError('Please provide sufficient proof details (at least 15 characters) describing distinctive marks, serial numbers, contents, or wallpapers.');
@@ -44,7 +44,7 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({ item, isOpen, onClose })
       return;
     }
 
-    submitClaim({
+    try {\n      await submitClaim({
       itemId: item.id,
       itemTitle: item.title,
       itemCategory: item.category,
@@ -123,23 +123,23 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({ item, isOpen, onClose })
               className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900/20 focus:border-blue-900 text-slate-900 leading-relaxed"
             />
             <p className="text-[11px] text-slate-400 mt-1">
-              This explanation is strictly confidential and reviewed only by Campus Security officers.
+              Your proof is private and visible only to you and authorized administrators. Do not upload ID cards or documents containing unnecessary personal information.
             </p>
           </div>
 
           {/* Optional Proof Document / Receipt */}
           <div>
             <label className="block text-xs font-semibold text-slate-800 mb-1">
-              Supporting Proof Attachment (Optional)
+              Supporting Proof Attachment (Optional · Max 5MB)
             </label>
             <label className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-xl cursor-pointer transition-colors text-xs text-slate-600">
               <Upload className="w-4 h-4 text-slate-400 shrink-0" />
               <span className="truncate">
-                {proofDocumentUrl ? 'Supporting image attached ✓' : 'Upload receipt, student ID card copy, or syllabus registration'}
+                {proofDocumentUrl ? 'Supporting image attached ✓' : 'Upload a receipt or non-sensitive supporting proof'}
               </span>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,application/pdf"
                 onChange={handleFileUpload}
                 className="hidden"
               />
