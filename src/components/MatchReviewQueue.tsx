@@ -1,14 +1,14 @@
 import React, { useMemo, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { MatchSuggestion, ItemReport } from '../types';
-import { CalendarDays, CheckCircle2, Clock3, MapPin, Search, Sparkles, XCircle, ZoomIn } from 'lucide-react';
+import { CalendarDays, CheckCircle2, Clock3, MapPin, RefreshCw, Search, Sparkles, XCircle, ZoomIn } from 'lucide-react';
 
 const confidenceLabel = (score: number) => score >= 80 ? 'High confidence' : score >= 60 ? 'Moderate confidence' : 'Possible match';
 
 interface MatchReviewQueueProps {}
 
 export const MatchReviewQueue: React.FC<MatchReviewQueueProps> = () => {
-  const { items, matchSuggestions, reviewMatchSuggestion, showNotification } = useApp();
+  const { items, matchSuggestions, reviewMatchSuggestion, refreshData, loading, showNotification } = useApp();
   const [filter, setFilter] = useState<'pending' | 'all'>('pending');
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<MatchSuggestion | null>(null);
@@ -88,6 +88,7 @@ export const MatchReviewQueue: React.FC<MatchReviewQueueProps> = () => {
           <p className="text-xs text-slate-500 mt-1 max-w-2xl">CampusFind compares open lost and found reports and ranks possible pairs. Review the original photos and evidence before making the final decision.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs">
+          <button onClick={() => refreshData()} disabled={loading} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50 disabled:opacity-50"><RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh queue</button>
           <button onClick={() => setFilter('pending')} className={`px-3 py-2 rounded-lg font-semibold ${filter === 'pending' ? 'bg-blue-900 text-white' : 'bg-slate-100 text-slate-700'}`}>Pending ({matchSuggestions.filter((s) => s.status === 'pending').length})</button>
           <button onClick={() => setFilter('all')} className={`px-3 py-2 rounded-lg font-semibold ${filter === 'all' ? 'bg-blue-900 text-white' : 'bg-slate-100 text-slate-700'}`}>All decisions</button>
         </div>
