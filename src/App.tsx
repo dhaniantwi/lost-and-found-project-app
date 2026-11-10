@@ -3,7 +3,6 @@ import { AppProvider, useApp } from './context/AppContext';
 import { Header } from './components/Header';
 import { HeroBanner } from './components/HeroBanner';
 import { ItemList } from './components/ItemList';
-import { MatchesView } from './components/MatchesView';
 import { StudentDashboard } from './components/StudentDashboard';
 import { AdminDashboard } from './components/AdminDashboard';
 import { ProjectDocumentation } from './components/ProjectDocumentation';
@@ -81,8 +80,6 @@ function CampusFindApp() {
             <ItemList items={items} onSelectItem={handleSelectItem} onClaimItem={handleClaimItem} onOpenReportModal={() => handleOpenReportModal('lost')} />
           </div>
         )}
-
-        {activeTab === 'matches' && (currentUser?.role === 'admin' ? <MatchesView onSelectItem={handleSelectItem} onClaimItem={handleClaimItem} /> : protectedNotice('Administrator access required for match review'))}
 
         {activeTab === 'my-activity' && (currentUser ? <StudentDashboard onSelectItem={handleSelectItem} onOpenReportModal={() => handleOpenReportModal('lost')} /> : protectedNotice('Your reports and claims'))}
 
