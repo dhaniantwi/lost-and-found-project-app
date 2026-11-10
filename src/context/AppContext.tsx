@@ -1,7 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
-import { ItemReport, Claim, StudentUser, AuditLog, ItemStatus, ClaimStatus, MatchScoreResult, MatchSuggestion, UserNotification } from '../types';
-import { findAllMatches } from '../utils/matching';
+import { ItemReport, Claim, StudentUser, AuditLog, ItemStatus, ClaimStatus, MatchSuggestion, UserNotification } from '../types';
 import { supabase } from '../lib/supabase';
 
 interface AppContextType {
@@ -11,7 +10,6 @@ interface AppContextType {
   currentUser: StudentUser | null;
   authUser: User | null;
   auditLogs: AuditLog[];
-  matches: MatchScoreResult[];
   matchSuggestions: MatchSuggestion[];
   notifications: UserNotification[];
   loading: boolean;
@@ -501,12 +499,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await updateItemStatus(itemId, 'recovered');
   };
 
-  // Match analysis is restricted to administrator accounts.
-  const matches = useMemo(() => currentUser?.role === 'admin' ? findAllMatches(items) : [], [items, currentUser]);
-
   return (
     <AppContext.Provider value={{
-      items, claims, users, currentUser, authUser, auditLogs, matches, matchSuggestions, notifications, loading,
+      items, claims, users, currentUser, authUser, auditLogs, matchSuggestions, notifications, loading,
       signIn, signUp, signOut, refreshData, addItemReport, updateItemStatus,
       deleteItemReport, submitClaim, reviewClaim, markItemRecovered, reviewMatchSuggestion, markNotificationRead,
       notification, showNotification
