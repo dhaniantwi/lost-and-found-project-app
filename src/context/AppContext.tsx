@@ -404,24 +404,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       handover_notes: status === 'collected' ? handoverNotes?.trim() || null : null
     }).eq('id', claimId).select('item_id').single();
     if (claimError) throw claimError;
-    if (status === 'approved') {
-      const { error } = await supabase.from('item_reports').update({ status: 'claimed' }).eq('id', claim.item_id);
-      if (error) throw error;
-    } else if (status === 'collected') {
-      const { error } = await supabase.from('item_reports').update({ status: 'recovered', resolution_date: new Date().toISOString().slice(0, 10) }).eq('id', claim.item_id);
-      if (error) throw error;
-    } else if (status === 'rejected') {
-      const { count, error: activeClaimsError } = await supabase
-        .from('claims')
-        .select('id', { count: 'exact', head: true })
-        .eq('item_id', claim.item_id)
-        .in('status', ['pending', 'approved']);
-      if (activeClaimsError) throw activeClaimsError;
-      const { error } = await supabase.from('item_reports')
-        .update({ status: (count || 0) > 0 ? 'in_review' : 'open' })
-        .eq('id', claim.item_id);
-      if (error) throw error;
-    }
+    // A database trigger updates the item status in the same transaction as the claim decision.
     await refreshData();
     showNotification(`Claim ${status}.`);
   };
