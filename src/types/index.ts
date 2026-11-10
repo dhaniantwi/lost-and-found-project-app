@@ -59,6 +59,10 @@ export interface Claim {
   reviewedAt?: string;
   reviewedBy?: string;
   collectionLocation?: string;
+  collectedAt?: string;
+  collectedBy?: string;
+  recipientIdVerified?: boolean;
+  handoverNotes?: string;
 }
 
 export interface StudentUser {
