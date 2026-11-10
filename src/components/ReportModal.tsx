@@ -32,7 +32,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
   const [imageUrl, setImageUrl] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  if (!isOpen) return null;
+  if (!isOpen || !currentUser) return null;
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -330,7 +330,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
                   <span className="text-[11px] text-slate-400 mt-0.5">JPG, PNG or WebP · Maximum 5MB</span>
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp"
                     onChange={handleFileUpload}
                     className="hidden"
                   />
