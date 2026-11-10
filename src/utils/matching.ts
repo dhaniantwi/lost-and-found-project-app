@@ -6,10 +6,9 @@ export function calculateMatchScore(lostItem: ItemReport, foundItem: ItemReport)
     return null;
   }
 
-  // Never match already recovered items with each other unless reviewing history
-  if (lostItem.status === 'recovered' && foundItem.status === 'recovered') {
-    return null;
-  }
+  // Only active reports and found items still available for a claim can match.
+  if (lostItem.status === 'recovered' || lostItem.status === 'archived') return null;
+  if (foundItem.status !== 'open' && foundItem.status !== 'in_review') return null;
 
   let score = 0;
   const reasons: string[] = [];
@@ -118,8 +117,8 @@ export function calculateMatchScore(lostItem: ItemReport, foundItem: ItemReport)
 }
 
 export function findAllMatches(items: ItemReport[]): MatchScoreResult[] {
-  const lostItems = items.filter((i) => i.type === 'lost' && i.status !== 'recovered');
-  const foundItems = items.filter((i) => i.type === 'found' && i.status !== 'recovered');
+  const lostItems = items.filter((i) => i.type === 'lost' && i.status !== 'recovered' && i.status !== 'archived');
+  const foundItems = items.filter((i) => i.type === 'found' && (i.status === 'open' || i.status === 'in_review'));
 
   const results: MatchScoreResult[] = [];
 
