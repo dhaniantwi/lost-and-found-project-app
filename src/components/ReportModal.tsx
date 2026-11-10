@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ItemCategory, ItemReport, ItemType } from '../types';
 import { useApp } from '../context/AppContext';
-import { UCC_LOCATIONS } from '../data/seedData';
+import { ITEM_CATEGORIES, UCC_LOCATIONS } from '../data/seedData';
 import { X, Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface ReportModalProps {
