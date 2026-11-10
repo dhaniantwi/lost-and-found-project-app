@@ -9,8 +9,8 @@ The following objects are provisioned in the CampusFind project:
 - `profiles`: private student profile and trusted role information, linked to Supabase Auth.
 - `item_reports`: lost/found report records. The table contains no reporter phone number or email.
 - `item_catalog`: safe catalog view for anonymous browsing; excludes reporter identifiers and private ownership notes.
-- `report_private_details`: owner/admin-only distinctive ownership marks.
-- `claims`: private ownership claims, visible only to the claimant and administrators.
+- `report_private_details`: owner/admin-only distinctive ownership marks, precise locations, and custody details.
+- `claims`: private ownership claims, visible only to the claimant and administrators. Approval and physical collection are separate states; collection records the verifying administrator, time, collection point, recipient-ID check, and handover notes.
 - `audit_logs`: protected audit history.
 - `private.is_campusfind_admin()`: non-exposed helper used by RLS policies.
 
@@ -20,7 +20,7 @@ All exposed application tables have Row Level Security enabled. The security adv
 
 Two private buckets are configured, each with a 5 MB upload limit:
 
-- `item-photos`: item photographs. Authenticated users can read photos; uploads are restricted to the uploader's UUID folder.
+- `item-photos`: item photographs. Only the report owner and administrators can read photos; uploads are restricted to the uploader's UUID folder. Public visitors see safe text-only previews.
 - `claim-evidence`: supporting claim evidence. Only the claimant and trusted administrators can read the files.
 
 The browser uses signed URLs for private objects. Do not make these buckets public.
@@ -63,7 +63,15 @@ The live project records these migrations in Supabase:
 9. `allow_owners_to_view_archived_reports`
 10. `complete_report_audit_and_prevent_duplicate_claims`
 11. `hide_private_storage_paths_from_public_catalog`
+12. `public_catalog_private_report_details`
+13. `secure_public_item_catalog`
+14. `verified_claim_handover`
+15. `sync_item_status_after_claim_review`
+16. `restrict_item_photo_access`
+17. `prevent_multiple_approved_claimants`
 
 A consolidated fresh-project snapshot is kept at `supabase/migrations/20261110_campusfind_baseline.sql`.
+
+A found-item claim must first be approved. Only then can an administrator record the physical handover after checking the recipient's original UCC student ID. The database rejects direct pending-to-collected transitions and prevents more than one approved claimant for the same item.
 
 No sample users, reports, claims, or audit rows are seeded into the live database.
