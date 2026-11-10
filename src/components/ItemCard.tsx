@@ -98,7 +98,7 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onSelect, onClaim }) =
             </div>
 
             <div className="flex items-center gap-2">
-              {!isLost && !isRecovered && (
+              {!isLost && (item.status === 'open' || item.status === 'in_review') && (
                 <button
                   type="button"
                   onClick={(e) => {
