@@ -26,8 +26,9 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   onOpenReportModal
 }) => {
   const { currentUser, items, claims, markItemRecovered } = useApp();
-  if (!currentUser) return null;
   const [activeSubTab, setActiveSubTab] = useState<'reports' | 'claims' | 'matched'>('reports');
+
+  if (!currentUser) return null;
 
   // Filter items reported by current student
   const myReports = items.filter((i) => i.reporterStudentId === currentUser.studentId);
