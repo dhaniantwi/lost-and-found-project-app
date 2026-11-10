@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { Claim, ItemReport, StudentUser } from '../types';
+import { MatchReviewQueue } from './MatchReviewQueue';
 import {
   ShieldCheck,
   CheckCircle2,
@@ -34,7 +35,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
     showNotification
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'claims' | 'reports' | 'users' | 'logs'>('claims');
+  const [activeTab, setActiveTab] = useState<'claims' | 'reports' | 'users' | 'logs' | 'matches'>('matches');
   const [selectedClaimForReview, setSelectedClaimForReview] = useState<Claim | null>(null);
   const [reviewDecision, setReviewDecision] = useState<'approved' | 'rejected' | 'collected'>('approved');
 
@@ -144,7 +145,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
       </div>
 
       {/* Admin Subtabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 text-xs font-semibold">
+      <div className="flex items-center gap-2 overflow-x-auto border-b border-slate-200 pb-2 text-xs font-semibold">
+        <button
+          onClick={() => setActiveTab('matches')}
+          className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+            activeTab === 'matches' ? 'bg-blue-900 text-white' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+          }`}
+        >
+          <CheckCircle2 className="w-4 h-4" />
+          <span>Automated Match Queue</span>
+        </button>
         <button
           onClick={() => setActiveTab('claims')}
           className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
@@ -193,6 +203,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
           <span>Security Audit Trail ({auditLogs.length})</span>
         </button>
       </div>
+
+      {activeTab === 'matches' && <MatchReviewQueue />}
 
       {/* Tab 1: Claims Verification Queue */}
       {activeTab === 'claims' && (
