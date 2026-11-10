@@ -133,8 +133,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       const { data: reportRows, error: reportsError } = authUser
-        ? await supabase.from('item_reports').select('*').order('created_at', { ascending: false })
-        : await supabase.from('item_catalog').select('*').order('created_at', { ascending: false });
+        ? await supabase.from('item_reports')
+            .select('id, reporter_id, type, title, category, description, campus_location, date_event, color, image_path, status, reward_offered, claims_count, resolution_date, created_at')
+            .order('created_at', { ascending: false })
+        : await supabase.from('item_catalog')
+            .select('*')
+            .order('created_at', { ascending: false });
       if (reportsError) throw reportsError;
 
       let privateRows: any[] = [];
@@ -157,13 +161,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           category: row.category,
           description: row.description,
           campusLocation: row.campus_location,
-          specificSpot: row.specific_spot || undefined,
+          specificSpot: privateDetails?.specific_spot || undefined,
           dateEvent: row.date_event,
           dateReported: row.created_at,
           color: row.color,
           distinctMarks: privateDetails?.distinct_marks || undefined,
-          storageLocation: row.storage_location || undefined,
-          imageUrl: await signedUrl('item-photos', row.image_path),
+          storageLocation: privateDetails?.storage_location || undefined,
+          imageUrl: authUser ? await signedUrl('item-photos', row.image_path) : undefined,
           reporterName: owner?.fullName || (ownRecord ? profile?.fullName : 'UCC student'),
           reporterStudentId: owner?.studentId || (ownRecord ? profile?.studentId : ''),
           reporterEmail: owner?.email || (ownRecord ? authUser?.email || '' : ''),
@@ -286,19 +290,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       category: report.category,
       description: report.description,
       campus_location: report.campusLocation,
-      specific_spot: report.specificSpot || null,
       date_event: report.dateEvent,
       color: report.color,
-      storage_location: report.storageLocation || null,
       image_path: imagePath,
       reward_offered: report.rewardOffered || null
     }).select('*').single();
     if (error) throw error;
-    if (report.distinctMarks) {
+    if (report.distinctMarks || report.specificSpot || report.storageLocation) {
       const { error: privateError } = await supabase.from('report_private_details').insert({
         item_id: data.id,
         owner_id: authUser.id,
-        distinct_marks: report.distinctMarks
+        distinct_marks: report.distinctMarks || null,
+        specific_spot: report.specificSpot || null,
+        storage_location: report.storageLocation || null
       });
       if (privateError) throw privateError;
     }
