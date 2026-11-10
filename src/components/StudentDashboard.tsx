@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { ItemReport, Claim } from '../types';
-import { calculateMatchScore } from '../utils/matching';
 import {
   User,
   Package,
@@ -13,7 +12,7 @@ import {
   Building,
   PlusCircle,
   ExternalLink,
-  Sparkles
+  Bell
 } from 'lucide-react';
 
 interface StudentDashboardProps {
@@ -25,8 +24,8 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
   onSelectItem,
   onOpenReportModal
 }) => {
-  const { currentUser, items, claims, markItemRecovered } = useApp();
-  const [activeSubTab, setActiveSubTab] = useState<'reports' | 'claims' | 'matched'>('reports');
+  const { currentUser, items, claims, notifications, markItemRecovered, markNotificationRead, showNotification } = useApp();
+  const [activeSubTab, setActiveSubTab] = useState<'reports' | 'claims' | 'notifications'>('reports');
 
   if (!currentUser) return null;
 
@@ -35,20 +34,6 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
 
   // Filter claims filed by current student
   const myClaims = claims.filter((c) => c.claimantStudentId === currentUser.studentId);
-
-  // Filter smart matches that relate to items this student lost
-  const myLostItems = myReports.filter((i) => i.type === 'lost' && i.status !== 'recovered' && i.status !== 'archived');
-  const foundItems = items.filter((i) => i.type === 'found' && (i.status === 'open' || i.status === 'in_review'));
-
-  const myMatches: { lost: ItemReport; found: ItemReport; score: number; reasons: string[] }[] = [];
-  for (const lost of myLostItems) {
-    for (const found of foundItems) {
-      const res = calculateMatchScore(lost, found);
-      if (res && res.score >= 40) {
-        myMatches.push({ lost, found, score: res.score, reasons: res.reasons });
-      }
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -114,15 +99,15 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
         </button>
 
         <button
-          onClick={() => setActiveSubTab('matched')}
+          onClick={() => setActiveSubTab('notifications')}
           className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
-            activeSubTab === 'matched'
+            activeSubTab === 'notifications'
               ? 'bg-blue-900 text-white'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
-          <Sparkles className="w-4 h-4 text-amber-500" />
-          <span>Matches for My Items ({myMatches.length})</span>
+          <Bell className="w-4 h-4" />
+          <span>Notifications ({notifications.filter((notification) => !notification.readAt).length})</span>
         </button>
       </div>
 
@@ -274,49 +259,60 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
         </div>
       )}
 
-      {/* Tab 3: Matched For Me */}
-      {activeSubTab === 'matched' && (
-        <div className="space-y-4">
-          {myMatches.length === 0 ? (
+      {/* Tab 3: Notifications */}
+      {activeSubTab === 'notifications' && (
+        <div className="space-y-3">
+          {notifications.length === 0 ? (
             <div className="bg-white rounded-xl border border-slate-200 p-10 text-center">
-              <Sparkles className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-              <p className="text-sm font-semibold text-slate-800">No active matches found for your lost items</p>
-              <p className="text-xs text-slate-500 mt-1">
-                As soon as another student or porter submits a matching found item, it will show up here.
-              </p>
+              <Bell className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-slate-800">You're all caught up</p>
+              <p className="text-xs text-slate-500 mt-1">CampusFind updates and administrator decisions about your reports will appear here.</p>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {myMatches.map(({ lost, found, score, reasons }, i) => (
-                <div
-                  key={i}
-                  className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4"
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="font-semibold text-slate-900">Your lost item: "{lost.title}"</span>
-                      <span className="font-mono font-bold bg-amber-100 text-amber-900 px-1.5 py-0.2 rounded text-[11px]">
-                        {score}% Match
-                      </span>
+          ) : notifications.map((notification) => {
+            const relatedItem = notification.relatedReportId
+              ? items.find((item) => item.id === notification.relatedReportId)
+              : undefined;
+            return (
+              <article key={notification.id} className={`rounded-xl border p-4 bg-white ${notification.readAt ? 'border-slate-200' : 'border-blue-200 shadow-xs'}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-bold text-slate-900">{notification.title}</h4>
+                      {!notification.readAt && <span className="rounded-full bg-blue-100 text-blue-800 px-2 py-0.5 text-[10px] font-bold">NEW</span>}
                     </div>
-                    <div className="text-xs text-slate-600">
-                      Matches found item: <strong className="text-slate-800">{found.title}</strong> at {found.campusLocation}
-                    </div>
-                    <div className="text-[11px] text-slate-500">
-                      Holding Point: {found.storageLocation || 'Finder'}
-                    </div>
+                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">{notification.message}</p>
+                    <p className="text-[11px] text-slate-400 mt-2">{new Date(notification.createdAt).toLocaleString()}</p>
                   </div>
-
-                  <button
-                    onClick={() => onSelectItem(found)}
-                    className="px-3.5 py-2 text-xs font-bold text-white bg-blue-900 hover:bg-blue-800 rounded-lg shadow-xs transition-colors self-start sm:self-auto shrink-0"
-                  >
-                    Inspect & Claim
-                  </button>
+                  {relatedItem && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          if (!notification.readAt) await markNotificationRead(notification.id);
+                          onSelectItem(relatedItem);
+                        } catch (error: any) {
+                          showNotification(error?.message || 'Unable to open this notification.');
+                        }
+                      }}
+                      className="shrink-0 px-3 py-2 rounded-lg bg-blue-900 text-white text-xs font-semibold hover:bg-blue-800"
+                    >
+                      View report
+                    </button>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
+                {!relatedItem && !notification.readAt && (
+                  <button
+                    onClick={async () => {
+                      try { await markNotificationRead(notification.id); }
+                      catch (error: any) { showNotification(error?.message || 'Unable to mark notification as read.'); }
+                    }}
+                    className="mt-3 text-xs font-semibold text-blue-900 hover:underline"
+                  >
+                    Mark as read
+                  </button>
+                )}
+              </article>
+            );
+          })}
         </div>
       )}
     </div>
