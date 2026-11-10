@@ -31,8 +31,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
     reviewClaim,
     deleteItemReport,
     markItemRecovered,
-    resetToDemoData
   } = useApp();
+
+  if (currentUser?.role !== 'admin') return null;
 
   const [activeTab, setActiveTab] = useState<'claims' | 'reports' | 'users' | 'logs'>('claims');
   const [selectedClaimForReview, setSelectedClaimForReview] = useState<Claim | null>(null);
@@ -86,13 +87,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
           </p>
         </div>
 
-        <button
-          onClick={resetToDemoData}
-          className="px-3.5 py-2 text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 hover:text-white rounded-lg border border-slate-700 transition-colors flex items-center gap-1.5 self-start md:self-auto"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          <span>Reset Demo Seed State</span>
-        </button>
+
       </div>
 
       {/* KPI Stats Grid */}
