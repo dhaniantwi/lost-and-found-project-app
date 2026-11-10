@@ -82,7 +82,7 @@ function CampusFindApp() {
           </div>
         )}
 
-        {activeTab === 'matches' && (currentUser ? <MatchesView onSelectItem={handleSelectItem} onClaimItem={handleClaimItem} /> : protectedNotice('Potential matches'))}
+        {activeTab === 'matches' && (currentUser?.role === 'admin' ? <MatchesView onSelectItem={handleSelectItem} onClaimItem={handleClaimItem} /> : protectedNotice('Administrator access required for match review'))}
 
         {activeTab === 'my-activity' && (currentUser ? <StudentDashboard onSelectItem={handleSelectItem} onOpenReportModal={() => handleOpenReportModal('lost')} /> : protectedNotice('Your reports and claims'))}
 
