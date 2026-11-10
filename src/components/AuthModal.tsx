@@ -5,7 +5,7 @@ import { X, ShieldCheck, GraduationCap } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (authenticated?: boolean) => void;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
@@ -30,7 +30,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     try {
       if (mode === 'signin') {
         await signIn(email, password);
-        onClose();
+        onClose(true);
       } else {
         if (password.length < 8) throw new Error('Use a password with at least 8 characters.');
         await signUp({ email, password, fullName, studentId, phone, hallOfResidence: hall, department });
@@ -56,7 +56,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             </div>
             <p className="text-xs text-slate-500 mt-1">Secure access for the UCC campus community</p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="p-2 rounded-lg text-slate-400 hover:bg-slate-100"><X className="w-5 h-5" /></button>
+          <button type="button" onClick={() => onClose(false)} aria-label="Close" className="p-2 rounded-lg text-slate-400 hover:bg-slate-100"><X className="w-5 h-5" /></button>
         </div>
 
         <div className="p-5">
