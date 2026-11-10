@@ -274,11 +274,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification('You have signed out.');
   };
 
-  const addAuditLog = async (action: string, targetId: string, details: string) => {
-    if (!authUser || currentUser?.role !== 'admin') return;
-    await supabase.from('audit_logs').insert({ actor_id: authUser.id, action, target_id: targetId || null, details });
-  };
-
   const addItemReport = async (report: Omit<ItemReport, 'id' | 'dateReported' | 'status' | 'claimsCount'>) => {
     if (!authUser || !currentUser) throw new Error('Please sign in before reporting an item.');
     const imagePath = await uploadDataUrl('item-photos', authUser.id, report.imageUrl);
@@ -323,7 +318,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       resolution_date: status === 'recovered' ? new Date().toISOString().slice(0, 10) : null
     }).eq('id', itemId);
     if (error) throw error;
-    if (currentUser) await addAuditLog('UPDATED_STATUS', itemId, `Changed report status to ${status}.`);
     await refreshData();
     showNotification(`Item report status updated to ${status}.`);
   };
@@ -331,7 +325,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const deleteItemReport = async (itemId: string) => {
     const { error } = await supabase.from('item_reports').delete().eq('id', itemId);
     if (error) throw error;
-    await addAuditLog('DELETED_REPORT', itemId, 'Removed an item report.');
     await refreshData();
     showNotification('Report deleted.');
   };
