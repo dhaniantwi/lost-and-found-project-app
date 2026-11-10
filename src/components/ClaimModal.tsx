@@ -86,7 +86,7 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({ item, isOpen, onClose })
             <div className="text-blue-900 font-semibold mb-0.5">Target Found Item:</div>
             <div className="text-slate-800 font-medium text-sm">{item.title}</div>
             <div className="text-slate-500 text-[11px] mt-1">
-              Found at: {item.campusLocation} · Custody: {item.storageLocation || 'Held by finder'}
+              Found at: {item.campusLocation} · Collection instructions will be provided if your claim is approved.
             </div>
           </div>
 
