@@ -77,7 +77,7 @@ function CampusFindApp() {
 
         {activeTab === 'browse' && (
           <div>
-            <HeroBanner onOpenReportModal={handleOpenReportModal} onNavigateToMatches={() => setActiveTab('matches')} onSearchFocus={() => {}} />
+            <HeroBanner onOpenReportModal={handleOpenReportModal} onSearchFocus={() => {}} />
             <ItemList items={items} onSelectItem={handleSelectItem} onClaimItem={handleClaimItem} onOpenReportModal={() => handleOpenReportModal('lost')} />
           </div>
         )}
