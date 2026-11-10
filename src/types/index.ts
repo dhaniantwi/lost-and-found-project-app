@@ -96,6 +96,16 @@ export interface MatchSuggestion {
   reviewNotes?: string;
 }
 
+export interface UserNotification {
+  id: string;
+  title: string;
+  message: string;
+  relatedReportId?: string;
+  matchSuggestionId?: string;
+  createdAt: string;
+  readAt?: string;
+}
+
 export interface AuditLog {
   id: string;
   timestamp: string;
