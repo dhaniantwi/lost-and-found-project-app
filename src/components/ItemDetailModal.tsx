@@ -270,7 +270,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
               </button>
             )}
 
-            {!isLost && !isRecovered && (
+            {!isLost && (item.status === 'open' || item.status === 'in_review') && (
               <button
                 onClick={() => {
                   onClose();
