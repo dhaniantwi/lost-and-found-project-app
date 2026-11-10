@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { UCC_HALLS } from '../data/seedData';
-import { X, ShieldCheck, GraduationCap } from 'lucide-react';
+import { X, ShieldCheck, GraduationCap, Eye, EyeOff } from 'lucide-react';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -13,6 +13,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState('');
   const [studentId, setStudentId] = useState('');
   const [phone, setPhone] = useState('');
@@ -37,6 +38,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         showNotification('Registration submitted. If email confirmation is enabled, verify your email before signing in.');
         setMode('signin');
         setPassword('');
+        setShowPassword(false);
       }
     } catch (err: any) {
       setError(err?.message || 'Authentication failed. Please try again.');
@@ -61,8 +63,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
         <div className="p-5">
           <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl mb-5">
-            <button type="button" onClick={() => { setMode('signin'); setError(''); }} className={`py-2 rounded-lg text-sm font-semibold ${mode === 'signin' ? 'bg-white text-blue-900 shadow-sm' : 'text-slate-500'}`}>Sign in</button>
-            <button type="button" onClick={() => { setMode('signup'); setError(''); }} className={`py-2 rounded-lg text-sm font-semibold ${mode === 'signup' ? 'bg-white text-blue-900 shadow-sm' : 'text-slate-500'}`}>Create account</button>
+            <button type="button" onClick={() => { setMode('signin'); setError(''); setShowPassword(false); }} className={`py-2 rounded-lg text-sm font-semibold ${mode === 'signin' ? 'bg-white text-blue-900 shadow-sm' : 'text-slate-500'}`}>Sign in</button>
+            <button type="button" onClick={() => { setMode('signup'); setError(''); setShowPassword(false); }} className={`py-2 rounded-lg text-sm font-semibold ${mode === 'signup' ? 'bg-white text-blue-900 shadow-sm' : 'text-slate-500'}`}>Create account</button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-3.5">
@@ -80,7 +82,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             )}
 
             <label className="block text-xs font-semibold text-slate-700">Email address<input required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 font-normal" /></label>
-            <label className="block text-xs font-semibold text-slate-700">Password<input required type="password" autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} value={password} onChange={e => setPassword(e.target.value)} className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 font-normal" />{mode === 'signup' && <span className="block mt-1 text-[11px] text-slate-400">At least 8 characters. Your password is handled securely by Supabase Auth.</span>}</label>
+            <label className="block text-xs font-semibold text-slate-700">Password
+              <span className="relative mt-1 block">
+                <input required type={showPassword ? 'text' : 'password'} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} value={password} onChange={e => setPassword(e.target.value)} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 pr-12 font-normal" />
+                <button type="button" onClick={() => setShowPassword(value => !value)} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} className="absolute inset-y-0 right-0 flex items-center justify-center px-3 text-slate-500 hover:text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-r-lg">
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </span>
+              {mode === 'signup' && <span className="block mt-1 text-[11px] text-slate-400">At least 8 characters. Your password is handled securely by Supabase Auth.</span>}
+            </label>
 
             {error && <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">{error}</div>}
 
