@@ -1,20 +1,18 @@
 import React from 'react';
 import heroCampusImage from '../assets/images/ucc_campus_hero_1794334426172.jpg';
 import { useApp } from '../context/AppContext';
-import { Search, PlusCircle, CheckCircle2, Shield, MapPin, Sparkles } from 'lucide-react';
+import { PlusCircle, CheckCircle2 } from 'lucide-react';
 
 interface HeroBannerProps {
   onOpenReportModal: (type?: 'lost' | 'found') => void;
-  onNavigateToMatches: () => void;
   onSearchFocus: () => void;
 }
 
 export const HeroBanner: React.FC<HeroBannerProps> = ({
   onOpenReportModal,
-  onNavigateToMatches,
   onSearchFocus
 }) => {
-  const { items, matches } = useApp();
+  const { items } = useApp();
 
   const totalReports = items.length;
   const lostCount = items.filter((i) => i.type === 'lost' && i.status !== 'recovered').length;
@@ -68,13 +66,6 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
               <span>Report Found Item</span>
             </button>
 
-            <button
-              onClick={onNavigateToMatches}
-              className="px-5 py-3 text-sm font-semibold text-slate-200 bg-slate-800/80 hover:bg-slate-700/80 hover:text-white rounded-lg border border-slate-700 transition-all flex items-center gap-2"
-            >
-              <Sparkles className="w-4 h-4 text-amber-400" />
-              <span>View Matches ({matches.length})</span>
-            </button>
           </div>
 
           {/* Real quantitative metrics strip with tabular numbers */}
