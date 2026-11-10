@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { ItemCategory, ItemReport, ItemType } from '../types';
 import { useApp } from '../context/AppContext';
-import { ITEM_CATEGORIES, UCC_LOCATIONS, UCC_HALLS } from '../data/seedData';
-import { X, Upload, Camera, AlertCircle, CheckCircle2, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { UCC_LOCATIONS } from '../data/seedData';
+import { X, Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface ReportModalProps {
   initialType?: ItemType;
@@ -10,11 +10,6 @@ interface ReportModalProps {
   onClose: () => void;
 }
 
-const SAMPLE_PHOTO_PRESETS = [
-  { name: 'Student ID Card', url: '/src/assets/images/student_id_card_1794334426557.jpg' },
-  { name: 'Casio Scientific Calculator', url: '/src/assets/images/casio_calculator_1794334427617.jpg' },
-  { name: 'Leather Wallet & Keys', url: '/src/assets/images/leather_wallet_keys_1794334427720.jpg' }
-];
 
 export const ReportModal: React.FC<ReportModalProps> = ({
   initialType = 'lost',
@@ -42,41 +37,14 @@ export const ReportModal: React.FC<ReportModalProps> = ({
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+        setErrors((current) => ({ ...current, image: 'Choose a JPG, PNG, or WebP image no larger than 5MB.' }));
+        return;
+      }
+      setErrors((current) => ({ ...current, image: '' }));
       const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          setImageUrl(reader.result);
-        }
-      };
+      reader.onload = () => { if (typeof reader.result === 'string') setImageUrl(reader.result); };
       reader.readAsDataURL(file);
-    }
-  };
-
-  const applyTemplate = (preset: 'id_card' | 'calculator' | 'wallet') => {
-    if (preset === 'id_card') {
-      setTitle('University Student ID Card');
-      setCategory('Student ID & Cards');
-      setColor('Navy Blue');
-      setDescription('Official UCC student ID card with lanyard. Lost during afternoon study session.');
-      setCampusLocation('Sam Jonah Library (Main)');
-      setDistinctMarks('Card barcode has student index number visible');
-      setImageUrl('/src/assets/images/student_id_card_1794334426557.jpg');
-    } else if (preset === 'calculator') {
-      setTitle('Casio fx-991EX Classwiz Calculator');
-      setCategory('Calculators & Academic');
-      setColor('Black');
-      setDescription('Scientific calculator with dark slide-on casing. Used for mathematics lecture.');
-      setCampusLocation('New Science Block / SLT');
-      setDistinctMarks('Initials written in marker on battery door');
-      setImageUrl('/src/assets/images/casio_calculator_1794334427617.jpg');
-    } else if (preset === 'wallet') {
-      setTitle('Brown Leather Wallet & Keys');
-      setCategory('Wallets & Bags');
-      setColor('Brown');
-      setDescription('Bifold wallet containing student card and brass room keys.');
-      setCampusLocation('Casely Hayford Hall (CASFORD)');
-      setDistinctMarks('Key tag stamped with room number');
-      setImageUrl('/src/assets/images/leather_wallet_keys_1794334427720.jpg');
     }
   };
 
@@ -90,11 +58,13 @@ export const ReportModal: React.FC<ReportModalProps> = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    if (!currentUser) { setErrors({ submit: 'Sign in before submitting a report.' }); return; }
 
-    addItemReport({
+    try {
+      await addItemReport({
       type,
       title: title.trim(),
       category,
@@ -112,9 +82,11 @@ export const ReportModal: React.FC<ReportModalProps> = ({
       reporterEmail: currentUser.email,
       reporterPhone: currentUser.phone,
       reporterHall: currentUser.hallOfResidence
-    });
-
-    onClose();
+      });
+      onClose();
+    } catch (error: any) {
+      setErrors((current) => ({ ...current, submit: error?.message || 'Unable to publish this report.' }));
+    }
   };
 
   return (
@@ -166,40 +138,6 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               <CheckCircle2 className="w-4 h-4" />
               <span>I Found Something (Report Found)</span>
             </button>
-          </div>
-
-          {/* Quick Demo Templates */}
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/80">
-            <div className="flex items-center justify-between text-xs text-slate-600 mb-2">
-              <span className="font-semibold flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>Quick Fill Templates:</span>
-              </span>
-              <span className="text-[11px] text-slate-400">1-click test fill</span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => applyTemplate('id_card')}
-                className="px-2.5 py-1 text-xs bg-white hover:bg-slate-100 border border-slate-200 rounded font-medium text-slate-700 transition-colors"
-              >
-                Student ID
-              </button>
-              <button
-                type="button"
-                onClick={() => applyTemplate('calculator')}
-                className="px-2.5 py-1 text-xs bg-white hover:bg-slate-100 border border-slate-200 rounded font-medium text-slate-700 transition-colors"
-              >
-                Casio Calculator
-              </button>
-              <button
-                type="button"
-                onClick={() => applyTemplate('wallet')}
-                className="px-2.5 py-1 text-xs bg-white hover:bg-slate-100 border border-slate-200 rounded font-medium text-slate-700 transition-colors"
-              >
-                Wallet & Keys
-              </button>
-            </div>
           </div>
 
           {/* Item Name */}
@@ -389,7 +327,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
                   <span className="text-xs font-semibold text-slate-700">
                     Click to browse or drop photo
                   </span>
-                  <span className="text-[11px] text-slate-400 mt-0.5">PNG, JPG up to 5MB</span>
+                  <span className="text-[11px] text-slate-400 mt-0.5">JPG, PNG or WebP · Maximum 5MB</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -398,29 +336,20 @@ export const ReportModal: React.FC<ReportModalProps> = ({
                   />
                 </label>
 
-                {/* Preset sample photos */}
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] text-slate-500">Or use campus sample:</span>
-                  {SAMPLE_PHOTO_PRESETS.map((p) => (
-                    <button
-                      key={p.name}
-                      type="button"
-                      onClick={() => setImageUrl(p.url)}
-                      className="text-[11px] font-medium text-blue-900 hover:underline"
-                    >
-                      {p.name}
-                    </button>
-                  ))}
-                </div>
+
               </div>
             )}
           </div>
+
+          {errors.image && <p className="text-xs text-rose-600 mt-2">{errors.image}</p>}
 
           {/* Reporter Preview Info */}
           <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600">
             <span className="font-semibold text-slate-800">Reporting as:</span>{' '}
             {currentUser.fullName} ({currentUser.studentId}) · {currentUser.hallOfResidence}
           </div>
+
+          {errors.submit && <p role="alert" className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3">{errors.submit}</p>}
 
           {/* Form Actions */}
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
