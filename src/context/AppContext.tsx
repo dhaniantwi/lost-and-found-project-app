@@ -1,346 +1,395 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { ItemReport, Claim, StudentUser, AuditLog, ItemStatus, ClaimStatus, MatchScoreResult } from '../types';
-import { INITIAL_ITEMS, INITIAL_CLAIMS, INITIAL_USERS, INITIAL_AUDIT_LOGS } from '../data/seedData';
 import { findAllMatches } from '../utils/matching';
+import { supabase } from '../lib/supabase';
 
 interface AppContextType {
   items: ItemReport[];
   claims: Claim[];
   users: StudentUser[];
-  currentUser: StudentUser;
+  currentUser: StudentUser | null;
+  authUser: User | null;
   auditLogs: AuditLog[];
   matches: MatchScoreResult[];
-  switchUser: (userId: string) => void;
-  addItemReport: (report: Omit<ItemReport, 'id' | 'dateReported' | 'status' | 'claimsCount'>) => ItemReport;
-  updateItemStatus: (itemId: string, status: ItemStatus) => void;
-  deleteItemReport: (itemId: string) => void;
-  submitClaim: (claimData: {
-    itemId: string;
-    itemTitle: string;
-    itemCategory: any;
-    itemCampusLocation: string;
-    proofDescription: string;
-    proofDocumentUrl?: string;
-  }) => Claim;
-  reviewClaim: (
-    claimId: string,
-    status: ClaimStatus,
-    adminNotes: string,
-    collectionLocation?: string
-  ) => void;
-  markItemRecovered: (itemId: string) => void;
-  resetToDemoData: () => void;
+  loading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (details: { email: string; password: string; fullName: string; studentId: string; phone: string; hallOfResidence: string; department: string }) => Promise<void>;
+  signOut: () => Promise<void>;
+  refreshData: () => Promise<void>;
+  addItemReport: (report: Omit<ItemReport, 'id' | 'dateReported' | 'status' | 'claimsCount'>) => Promise<ItemReport>;
+  updateItemStatus: (itemId: string, status: ItemStatus) => Promise<void>;
+  deleteItemReport: (itemId: string) => Promise<void>;
+  submitClaim: (claimData: { itemId: string; itemTitle: string; itemCategory: any; itemCampusLocation: string; proofDescription: string; proofDocumentUrl?: string }) => Promise<Claim>;
+  reviewClaim: (claimId: string, status: ClaimStatus, adminNotes: string, collectionLocation?: string) => Promise<void>;
+  markItemRecovered: (itemId: string) => Promise<void>;
   notification: string | null;
   showNotification: (msg: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const STORAGE_KEYS = {
-  ITEMS: 'campusfind_items_v1',
-  CLAIMS: 'campusfind_claims_v1',
-  USERS: 'campusfind_users_v1',
-  CURRENT_USER_ID: 'campusfind_current_user_id_v1',
-  LOGS: 'campusfind_logs_v1'
+const mapProfile = (row: any): StudentUser => ({
+  id: row.id,
+  studentId: row.student_id || '',
+  fullName: row.full_name || 'UCC Student',
+  email: row.email || '',
+  phone: row.phone || '',
+  hallOfResidence: row.hall_of_residence || '',
+  department: row.department || '',
+  role: row.role === 'admin' ? 'admin' : 'student',
+  joinedDate: row.created_at || new Date().toISOString()
+});
+
+const uploadDataUrl = async (bucket: string, userId: string, value?: string) => {
+  if (!value || !value.startsWith('data:')) return value || null;
+  const response = await fetch(value);
+  const blob = await response.blob();
+  const extension = blob.type === 'image/png' ? 'png' : blob.type === 'image/webp' ? 'webp' : blob.type === 'application/pdf' ? 'pdf' : 'jpg';
+  const path = `${userId}/${crypto.randomUUID()}.${extension}`;
+  const { error } = await supabase.storage.from(bucket).upload(path, blob, {
+    contentType: blob.type || 'image/jpeg',
+    upsert: false
+  });
+  if (error) throw error;
+  return path;
+};
+
+const signedUrl = async (bucket: string, path?: string | null) => {
+  if (!path) return undefined;
+  if (/^(https?:|data:|\/)/.test(path)) return path;
+  const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60);
+  if (error) return undefined;
+  return data.signedUrl;
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [items, setItems] = useState<ItemReport[]>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEYS.ITEMS);
-      return stored ? JSON.parse(stored) : INITIAL_ITEMS;
-    } catch {
-      return INITIAL_ITEMS;
-    }
-  });
-
-  const [claims, setClaims] = useState<Claim[]>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEYS.CLAIMS);
-      return stored ? JSON.parse(stored) : INITIAL_CLAIMS;
-    } catch {
-      return INITIAL_CLAIMS;
-    }
-  });
-
-  const [users] = useState<StudentUser[]>(INITIAL_USERS);
-
-  const [currentUserId, setCurrentUserId] = useState<string>(() => {
-    try {
-      return localStorage.getItem(STORAGE_KEYS.CURRENT_USER_ID) || 'user-1';
-    } catch {
-      return 'user-1';
-    }
-  });
-
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEYS.LOGS);
-      return stored ? JSON.parse(stored) : INITIAL_AUDIT_LOGS;
-    } catch {
-      return INITIAL_AUDIT_LOGS;
-    }
-  });
-
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<ItemReport[]>([]);
+  const [claims, setClaims] = useState<Claim[]>([]);
+  const [users, setUsers] = useState<StudentUser[]>([]);
+  const [currentUser, setCurrentUser] = useState<StudentUser | null>(null);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [notification, setNotification] = useState<string | null>(null);
 
-  const showNotification = (msg: string) => {
+  const showNotification = useCallback((msg: string) => {
     setNotification(msg);
-    setTimeout(() => {
-      setNotification((curr) => (curr === msg ? null : curr));
-    }, 4500);
-  };
-
-  // Sync state to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.ITEMS, JSON.stringify(items));
-    } catch (e) {
-      console.warn('Storage save error:', e);
-    }
-  }, [items]);
+    window.setTimeout(() => setNotification((current) => current === msg ? null : current), 4500);
+  }, []);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.CLAIMS, JSON.stringify(claims));
-    } catch (e) {
-      console.warn('Storage save error:', e);
-    }
-  }, [claims]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.CURRENT_USER_ID, currentUserId);
-    } catch (e) {
-      console.warn('Storage save error:', e);
-    }
-  }, [currentUserId]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(auditLogs));
-    } catch (e) {
-      console.warn('Storage save error:', e);
-    }
-  }, [auditLogs]);
-
-  const currentUser = useMemo(() => {
-    return users.find((u) => u.id === currentUserId) || users[0];
-  }, [users, currentUserId]);
-
-  const matches = useMemo(() => {
-    return findAllMatches(items);
-  }, [items]);
-
-  const addAuditLog = (action: string, targetId: string, details: string) => {
-    const newLog: AuditLog = {
-      id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      timestamp: new Date().toISOString(),
-      actor: `${currentUser.fullName} (${currentUser.role === 'admin' ? 'Admin' : 'Student'})`,
-      actorRole: currentUser.role === 'admin' ? 'Administrator' : 'Student',
-      action,
-      targetId,
-      details
+    let active = true;
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (!active) return;
+      if (error) showNotification(error.message);
+      setAuthUser(data.session?.user ?? null);
+      setAuthReady(true);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthUser(session?.user ?? null);
+      setAuthReady(true);
+    });
+    return () => {
+      active = false;
+      listener.subscription.unsubscribe();
     };
-    setAuditLogs((prev) => [newLog, ...prev]);
-  };
+  }, [showNotification]);
 
-  const switchUser = (userId: string) => {
-    const target = users.find((u) => u.id === userId);
-    if (target) {
-      setCurrentUserId(userId);
-      showNotification(`Switched persona to ${target.fullName} (${target.role.toUpperCase()})`);
+  const refreshData = useCallback(async () => {
+    if (!authReady) return;
+    setLoading(true);
+    try {
+      let profileRows: any[] = [];
+      let profile: StudentUser | null = null;
+
+      if (authUser) {
+        const { data: ownProfile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', authUser.id)
+          .maybeSingle();
+        if (profileError) throw profileError;
+        if (ownProfile) {
+          profile = mapProfile({ ...ownProfile, email: authUser.email || '' });
+          profileRows = [profile];
+          if (profile.role === 'admin') {
+            const { data: allProfiles, error: usersError } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+            if (usersError) throw usersError;
+            profileRows = (allProfiles || []).map((row: any) => mapProfile(row));
+          }
+        }
+      }
+
+      const { data: reportRows, error: reportsError } = authUser
+        ? await supabase.from('item_reports').select('*').neq('status', 'archived').order('created_at', { ascending: false })
+        : await supabase.from('item_catalog').select('*').order('created_at', { ascending: false });
+      if (reportsError) throw reportsError;
+
+      let privateRows: any[] = [];
+      if (authUser) {
+        const { data, error } = await supabase.from('report_private_details').select('*');
+        if (error) throw error;
+        privateRows = data || [];
+      }
+
+      const profileById = new Map(profileRows.map((person: any) => [person.id, person]));
+      const privateByItem = new Map(privateRows.map((row: any) => [row.item_id, row]));
+      const mappedItems = await Promise.all((reportRows || []).map(async (row: any) => {
+        const owner = profileById.get(row.reporter_id) as StudentUser | undefined;
+        const ownRecord = authUser?.id === row.reporter_id;
+        const privateDetails = privateByItem.get(row.id);
+        return {
+          id: row.id,
+          type: row.type,
+          title: row.title,
+          category: row.category,
+          description: row.description,
+          campusLocation: row.campus_location,
+          specificSpot: row.specific_spot || undefined,
+          dateEvent: row.date_event,
+          dateReported: row.created_at,
+          color: row.color,
+          distinctMarks: privateDetails?.distinct_marks || undefined,
+          storageLocation: row.storage_location || undefined,
+          imageUrl: await signedUrl('item-photos', row.image_path),
+          reporterName: owner?.fullName || (ownRecord ? profile?.fullName : 'UCC student'),
+          reporterStudentId: owner?.studentId || (ownRecord ? profile?.studentId : ''),
+          reporterEmail: owner?.email || (ownRecord ? authUser?.email || '' : ''),
+          reporterPhone: owner?.phone || (ownRecord ? profile?.phone : ''),
+          reporterHall: owner?.hallOfResidence || (ownRecord ? profile?.hallOfResidence : ''),
+          status: row.status,
+          claimsCount: row.claims_count || 0,
+          rewardOffered: row.reward_offered || undefined,
+          resolutionDate: row.resolution_date || undefined
+        } as ItemReport;
+      }));
+
+      const itemById = new Map(mappedItems.map((item) => [item.id, item]));
+      let mappedClaims: Claim[] = [];
+      if (authUser) {
+        const { data: claimRows, error: claimsError } = await supabase.from('claims').select('*').order('submitted_at', { ascending: false });
+        if (claimsError) throw claimsError;
+        mappedClaims = await Promise.all((claimRows || []).map(async (row: any) => {
+          const claimant = profileById.get(row.claimant_id) as StudentUser | undefined;
+          const item = itemById.get(row.item_id);
+          return {
+            id: row.id,
+            itemId: row.item_id,
+            itemTitle: item?.title || 'Campus item',
+            itemCategory: item?.category || 'Other',
+            itemCampusLocation: item?.campusLocation || '',
+            claimantName: claimant?.fullName || (row.claimant_id === authUser.id ? profile?.fullName : 'UCC student'),
+            claimantStudentId: claimant?.studentId || (row.claimant_id === authUser.id ? profile?.studentId : ''),
+            claimantEmail: claimant?.email || (row.claimant_id === authUser.id ? authUser.email || '' : ''),
+            claimantPhone: claimant?.phone || (row.claimant_id === authUser.id ? profile?.phone : ''),
+            claimantHall: claimant?.hallOfResidence || (row.claimant_id === authUser.id ? profile?.hallOfResidence : ''),
+            proofDescription: row.proof_description,
+            proofDocumentUrl: await signedUrl('claim-evidence', row.proof_document_path),
+            status: row.status,
+            adminNotes: row.admin_notes || undefined,
+            submittedAt: row.submitted_at,
+            reviewedAt: row.reviewed_at || undefined,
+            reviewedBy: row.reviewed_by ? (profileById.get(row.reviewed_by) as StudentUser | undefined)?.fullName : undefined,
+            collectionLocation: row.collection_location || undefined
+          };
+        }));
+      }
+
+      let logs: AuditLog[] = [];
+      if (profile?.role === 'admin') {
+        const { data, error } = await supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(300);
+        if (error) throw error;
+        logs = (data || []).map((row: any) => ({
+          id: row.id,
+          timestamp: row.created_at,
+          actor: (profileById.get(row.actor_id) as StudentUser | undefined)?.fullName || 'System',
+          actorRole: 'Administrator',
+          action: row.action,
+          targetId: row.target_id || '',
+          details: row.details
+        }));
+      }
+
+      setCurrentUser(profile);
+      setUsers(profile?.role === 'admin' ? profileRows as StudentUser[] : []);
+      setItems(mappedItems);
+      setClaims(mappedClaims);
+      setAuditLogs(logs);
+    } catch (error: any) {
+      showNotification(error?.message || 'Unable to load CampusFind data.');
+    } finally {
+      setLoading(false);
     }
+  }, [authReady, authUser, showNotification]);
+
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
+
+  const signIn = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    if (error) throw error;
+    showNotification('Signed in successfully.');
   };
 
-  const addItemReport = (
-    reportData: Omit<ItemReport, 'id' | 'dateReported' | 'status' | 'claimsCount'>
-  ): ItemReport => {
-    const newId = `item-${Date.now()}`;
-    const newItem: ItemReport = {
-      ...reportData,
-      id: newId,
-      dateReported: new Date().toISOString(),
+  const signUp = async (details: { email: string; password: string; fullName: string; studentId: string; phone: string; hallOfResidence: string; department: string }) => {
+    const { error } = await supabase.auth.signUp({
+      email: details.email.trim(),
+      password: details.password,
+      options: {
+        data: {
+          full_name: details.fullName.trim(),
+          student_id: details.studentId.trim(),
+          phone: details.phone.trim(),
+          hall_of_residence: details.hallOfResidence,
+          department: details.department.trim()
+        }
+      }
+    });
+    if (error) throw error;
+    showNotification('Account request submitted. Check your email if confirmation is required.');
+  };
+
+  const signOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    setCurrentUser(null);
+    setItems([]);
+    setClaims([]);
+    setUsers([]);
+    setAuditLogs([]);
+    showNotification('You have signed out.');
+  };
+
+  const addAuditLog = async (action: string, targetId: string, details: string) => {
+    if (!authUser || currentUser?.role !== 'admin') return;
+    await supabase.from('audit_logs').insert({ actor_id: authUser.id, action, target_id: targetId || null, details });
+  };
+
+  const addItemReport = async (report: Omit<ItemReport, 'id' | 'dateReported' | 'status' | 'claimsCount'>) => {
+    if (!authUser || !currentUser) throw new Error('Please sign in before reporting an item.');
+    const imagePath = await uploadDataUrl('item-photos', authUser.id, report.imageUrl);
+    const { data, error } = await supabase.from('item_reports').insert({
+      reporter_id: authUser.id,
+      type: report.type,
+      title: report.title,
+      category: report.category,
+      description: report.description,
+      campus_location: report.campusLocation,
+      specific_spot: report.specificSpot || null,
+      date_event: report.dateEvent,
+      color: report.color,
+      storage_location: report.storageLocation || null,
+      image_path: imagePath,
+      reward_offered: report.rewardOffered || null
+    }).select('*').single();
+    if (error) throw error;
+    if (report.distinctMarks) {
+      const { error: privateError } = await supabase.from('report_private_details').insert({
+        item_id: data.id,
+        owner_id: authUser.id,
+        distinct_marks: report.distinctMarks
+      });
+      if (privateError) throw privateError;
+    }
+    await refreshData();
+    showNotification(`Your ${report.type} item report has been published.`);
+    const result = items.find((item) => item.id === data.id);
+    return result || ({
+      ...report,
+      id: data.id,
+      dateReported: data.created_at,
       status: 'open',
       claimsCount: 0
-    };
-
-    setItems((prev) => [newItem, ...prev]);
-    addAuditLog(
-      newItem.type === 'lost' ? 'REPORTED_LOST' : 'REPORTED_FOUND',
-      newId,
-      `Reported ${newItem.type}: "${newItem.title}" at ${newItem.campusLocation}`
-    );
-    showNotification(`New ${newItem.type.toUpperCase()} report successfully published to campus board!`);
-    return newItem;
+    } as ItemReport);
   };
 
-  const updateItemStatus = (itemId: string, status: ItemStatus) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === itemId ? { ...item, status } : item))
-    );
-    addAuditLog('UPDATED_STATUS', itemId, `Changed status of item ${itemId} to ${status}`);
+  const updateItemStatus = async (itemId: string, status: ItemStatus) => {
+    const { error } = await supabase.from('item_reports').update({
+      status,
+      resolution_date: status === 'recovered' ? new Date().toISOString().slice(0, 10) : null
+    }).eq('id', itemId);
+    if (error) throw error;
+    if (currentUser) await addAuditLog('UPDATED_STATUS', itemId, `Changed report status to ${status}.`);
+    await refreshData();
     showNotification(`Item report status updated to ${status}.`);
   };
 
-  const deleteItemReport = (itemId: string) => {
-    const target = items.find((i) => i.id === itemId);
-    setItems((prev) => prev.filter((item) => item.id !== itemId));
-    addAuditLog('DELETED_REPORT', itemId, `Removed report for: "${target?.title || itemId}"`);
-    showNotification(`Report has been deleted from the system.`);
+  const deleteItemReport = async (itemId: string) => {
+    const { error } = await supabase.from('item_reports').delete().eq('id', itemId);
+    if (error) throw error;
+    await addAuditLog('DELETED_REPORT', itemId, 'Removed an item report.');
+    await refreshData();
+    showNotification('Report deleted.');
   };
 
-  const submitClaim = ({
-    itemId,
-    itemTitle,
-    itemCategory,
-    itemCampusLocation,
-    proofDescription,
-    proofDocumentUrl
-  }: {
-    itemId: string;
-    itemTitle: string;
-    itemCategory: any;
-    itemCampusLocation: string;
-    proofDescription: string;
-    proofDocumentUrl?: string;
-  }): Claim => {
-    const newClaimId = `claim-${Date.now()}`;
-    const newClaim: Claim = {
-      id: newClaimId,
-      itemId,
-      itemTitle,
-      itemCategory,
-      itemCampusLocation,
-      claimantName: currentUser.fullName,
-      claimantStudentId: currentUser.studentId,
-      claimantEmail: currentUser.email,
-      claimantPhone: currentUser.phone,
-      claimantHall: currentUser.hallOfResidence,
-      proofDescription,
-      proofDocumentUrl,
-      status: 'pending',
-      submittedAt: new Date().toISOString()
-    };
-
-    setClaims((prev) => [newClaim, ...prev]);
-
-    // Update item status to 'in_review' and increment claimsCount
-    setItems((prev) =>
-      prev.map((i) =>
-        i.id === itemId
-          ? { ...i, status: 'in_review', claimsCount: (i.claimsCount || 0) + 1 }
-          : i
-      )
-    );
-
-    addAuditLog(
-      'SUBMITTED_CLAIM',
-      newClaimId,
-      `Student ${currentUser.fullName} (${currentUser.studentId}) claimed item "${itemTitle}".`
-    );
-
-    showNotification(`Claim submitted! Campus administration will review your ownership details.`);
-    return newClaim;
+  const submitClaim = async (claimData: { itemId: string; itemTitle: string; itemCategory: any; itemCampusLocation: string; proofDescription: string; proofDocumentUrl?: string }) => {
+    if (!authUser) throw new Error('Please sign in before submitting a claim.');
+    const evidencePath = await uploadDataUrl('claim-evidence', authUser.id, claimData.proofDocumentUrl);
+    const { data, error } = await supabase.from('claims').insert({
+      item_id: claimData.itemId,
+      claimant_id: authUser.id,
+      proof_description: claimData.proofDescription,
+      proof_document_path: evidencePath
+    }).select('*').single();
+    if (error) throw error;
+    await refreshData();
+    showNotification('Your ownership claim has been submitted for review.');
+    return {
+      id: data.id,
+      itemId: data.item_id,
+      itemTitle: claimData.itemTitle,
+      itemCategory: claimData.itemCategory,
+      itemCampusLocation: claimData.itemCampusLocation,
+      claimantName: currentUser?.fullName || '',
+      claimantStudentId: currentUser?.studentId || '',
+      claimantEmail: authUser.email || '',
+      claimantPhone: currentUser?.phone || '',
+      claimantHall: currentUser?.hallOfResidence || '',
+      proofDescription: data.proof_description,
+      proofDocumentUrl: undefined,
+      status: data.status,
+      submittedAt: data.submitted_at
+    } as Claim;
   };
 
-  const reviewClaim = (
-    claimId: string,
-    status: ClaimStatus,
-    adminNotes: string,
-    collectionLocation?: string
-  ) => {
-    const now = new Date().toISOString();
-    let claimedItemId = '';
-
-    setClaims((prev) =>
-      prev.map((c) => {
-        if (c.id === claimId) {
-          claimedItemId = c.itemId;
-          return {
-            ...c,
-            status,
-            adminNotes,
-            reviewedAt: now,
-            reviewedBy: currentUser.fullName,
-            collectionLocation: collectionLocation || c.collectionLocation
-          };
-        }
-        return c;
-      })
-    );
-
+  const reviewClaim = async (claimId: string, status: ClaimStatus, adminNotes: string, collectionLocation?: string) => {
+    if (!authUser || currentUser?.role !== 'admin') throw new Error('Administrator access is required.');
+    const { data: claim, error: claimError } = await supabase.from('claims').update({
+      status,
+      admin_notes: adminNotes,
+      collection_location: collectionLocation || null,
+      reviewed_by: authUser.id,
+      reviewed_at: new Date().toISOString()
+    }).eq('id', claimId).select('item_id').single();
+    if (claimError) throw claimError;
     if (status === 'approved') {
-      setItems((prev) =>
-        prev.map((item) =>
-          item.id === claimedItemId
-            ? { ...item, status: 'claimed' }
-            : item
-        )
-      );
+      const { error } = await supabase.from('item_reports').update({ status: 'claimed' }).eq('id', claim.item_id);
+      if (error) throw error;
     } else if (status === 'collected') {
-      setItems((prev) =>
-        prev.map((item) =>
-          item.id === claimedItemId
-            ? { ...item, status: 'recovered', resolutionDate: now.split('T')[0] }
-            : item
-        )
-      );
+      const { error } = await supabase.from('item_reports').update({ status: 'recovered', resolution_date: new Date().toISOString().slice(0, 10) }).eq('id', claim.item_id);
+      if (error) throw error;
     }
-
-    addAuditLog(
-      `CLAIM_${status.toUpperCase()}`,
-      claimId,
-      `Administrator ${currentUser.fullName} marked claim ${claimId} as ${status}.`
-    );
-
-    showNotification(`Claim ${status.toUpperCase()}: Decision recorded and claimant notified.`);
+    await addAuditLog(`CLAIM_${status.toUpperCase()}`, claimId, `Administrator reviewed claim as ${status}.`);
+    await refreshData();
+    showNotification(`Claim ${status}.`);
   };
 
-  const markItemRecovered = (itemId: string) => {
-    const now = new Date().toISOString().split('T')[0];
-    setItems((prev) =>
-      prev.map((item) =>
-        item.id === itemId ? { ...item, status: 'recovered', resolutionDate: now } : item
-      )
-    );
-    addAuditLog('ITEM_RECOVERED', itemId, `Marked item ${itemId} as safely recovered.`);
-    showNotification('Item marked as successfully recovered! Great news for campus community.');
+  const markItemRecovered = async (itemId: string) => {
+    await updateItemStatus(itemId, 'recovered');
   };
 
-  const resetToDemoData = () => {
-    setItems(INITIAL_ITEMS);
-    setClaims(INITIAL_CLAIMS);
-    setAuditLogs(INITIAL_AUDIT_LOGS);
-    setCurrentUserId('user-1');
-    localStorage.removeItem(STORAGE_KEYS.ITEMS);
-    localStorage.removeItem(STORAGE_KEYS.CLAIMS);
-    localStorage.removeItem(STORAGE_KEYS.LOGS);
-    localStorage.removeItem(STORAGE_KEYS.CURRENT_USER_ID);
-    showNotification('Reset application data to initial UCC project state.');
-  };
+  const matches = useMemo(() => findAllMatches(items), [items]);
 
   return (
-    <AppContext.Provider
-      value={{
-        items,
-        claims,
-        users,
-        currentUser,
-        auditLogs,
-        matches,
-        switchUser,
-        addItemReport,
-        updateItemStatus,
-        deleteItemReport,
-        submitClaim,
-        reviewClaim,
-        markItemRecovered,
-        resetToDemoData,
-        notification,
-        showNotification
-      }}
-    >
+    <AppContext.Provider value={{
+      items, claims, users, currentUser, authUser, auditLogs, matches, loading,
+      signIn, signUp, signOut, refreshData, addItemReport, updateItemStatus,
+      deleteItemReport, submitClaim, reviewClaim, markItemRecovered,
+      notification, showNotification
+    }}>
       {children}
     </AppContext.Provider>
   );
@@ -348,8 +397,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
 export const useApp = () => {
   const context = useContext(AppContext);
-  if (!context) {
-    throw new Error('useApp must be used within an AppProvider');
-  }
+  if (!context) throw new Error('useApp must be used within an AppProvider');
   return context;
 };
