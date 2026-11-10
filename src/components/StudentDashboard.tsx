@@ -172,7 +172,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                     </span>
 
                     <div className="flex items-center gap-2">
-                      {item.status !== 'recovered' && (
+                      {item.type === 'lost' && item.status !== 'recovered' && (
                         <button
                           onClick={() => markItemRecovered(item.id)}
                           className="px-2.5 py-1 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded transition-colors"
