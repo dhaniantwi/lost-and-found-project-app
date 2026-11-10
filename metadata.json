@@ -1,0 +1,6 @@
+{
+  "name": "CampusFind – UCC Lost & Found Management System",
+  "description": "Centralized campus lost and found platform for the University of Cape Coast (UCC), featuring student reporting, automated item matching, claim verification, and administrative audit trails.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
