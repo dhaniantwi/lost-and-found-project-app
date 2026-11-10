@@ -84,6 +84,18 @@ export interface MatchScoreResult {
   reasons: string[];
 }
 
+export interface MatchSuggestion {
+  id: string;
+  lostReportId: string;
+  foundReportId: string;
+  score: number;
+  evidence: string[];
+  status: 'pending' | 'approved' | 'rejected' | 'withdrawn';
+  createdAt: string;
+  reviewedAt?: string;
+  reviewNotes?: string;
+}
+
 export interface AuditLog {
   id: string;
   timestamp: string;
