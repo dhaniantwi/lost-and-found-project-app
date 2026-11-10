@@ -1,4 +1,5 @@
 import React from 'react';
+import heroCampusImage from '../assets/images/ucc_campus_hero_1794334426172.jpg';
 import { useApp } from '../context/AppContext';
 import { Search, PlusCircle, CheckCircle2, Shield, MapPin, Sparkles } from 'lucide-react';
 
@@ -25,7 +26,7 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
       {/* Background Campus Image with measured contrast scrim */}
       <div className="absolute inset-0 z-0">
         <img
-          src="/src/assets/images/ucc_campus_hero_1794334426172.jpg"
+          src={heroCampusImage}
           alt="University of Cape Coast Campus"
           referrerPolicy="no-referrer"
           className="w-full h-full object-cover opacity-25 filter brightness-90"
