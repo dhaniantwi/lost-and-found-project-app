@@ -320,7 +320,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
                         {item.status.replace('_', ' ')}
                       </td>
                       <td className="py-3 px-4 text-right whitespace-nowrap space-x-2">
-                        {item.status !== 'recovered' && (
+                        {item.type === 'lost' && item.status !== 'recovered' && (
                           <button
                             onClick={() => markItemRecovered(item.id)}
                             className="px-2.5 py-1 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 rounded"
