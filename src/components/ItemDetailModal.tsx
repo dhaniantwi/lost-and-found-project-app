@@ -259,7 +259,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
           </button>
 
           <div className="flex items-center gap-2">
-            {(isOwner || isAdmin) && !isRecovered && (
+            {isLost && (isOwner || isAdmin) && !isRecovered && (
               <button
                 onClick={() => {
                   markItemRecovered(item.id);
