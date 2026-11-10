@@ -415,7 +415,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await updateItemStatus(itemId, 'recovered');
   };
 
-  const matches = useMemo(() => findAllMatches(items), [items]);
+  // Match analysis is available only to users with an authenticated CampusFind profile.
+  const matches = useMemo(() => currentUser ? findAllMatches(items) : [], [items, currentUser]);
 
   return (
     <AppContext.Provider value={{
