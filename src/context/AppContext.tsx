@@ -448,7 +448,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .from('match_suggestions')
       .update({ status: decision, review_notes: notes.trim() })
       .eq('id', suggestionId)
-      .eq('status', 'pending');
+      .eq('status', 'pending')
+      .select('id')
+      .single();
     if (error) throw error;
     await refreshData();
     showNotification(`Potential match ${decision}.`);
