@@ -123,7 +123,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       const { data: reportRows, error: reportsError } = authUser
-        ? await supabase.from('item_reports').select('*').neq('status', 'archived').order('created_at', { ascending: false })
+        ? await supabase.from('item_reports').select('*').order('created_at', { ascending: false })
         : await supabase.from('item_catalog').select('*').order('created_at', { ascending: false });
       if (reportsError) throw reportsError;
 
