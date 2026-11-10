@@ -303,6 +303,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
               Item Photograph (Optional but Recommended)
             </label>
+            <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2.5 mb-3">Do not upload student ID cards, bank cards, passports, or documents showing personal information. Item photos may be visible to signed-in CampusFind users.</p>
 
             {imageUrl ? (
               <div className="relative rounded-xl overflow-hidden aspect-16/9 bg-slate-100 border border-slate-200 mb-3">
