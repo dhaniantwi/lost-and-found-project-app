@@ -21,39 +21,41 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({ item, isOpen, onClose })
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (!['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(file.type) || file.size > 5 * 1024 * 1024) {\n        setError('Choose a JPG, PNG, WebP, or PDF file no larger than 5MB.');\n        return;\n      }\n      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === 'string') {
-          setProofDocumentUrl(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      setError('Choose a JPG, PNG, WebP, or PDF file no larger than 5MB.');
+      return;
     }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') setProofDocumentUrl(reader.result);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!proofDescription.trim() || proofDescription.length < 15) {
-      setError('Please provide sufficient proof details (at least 15 characters) describing distinctive marks, serial numbers, contents, or wallpapers.');
+      setError('Please provide sufficient proof details (at least 15 characters) describing distinctive marks, serial numbers, or contents.');
       return;
     }
-
     if (!agreedToTerms) {
-      setError('You must confirm under student honor code that this item belongs to you.');
+      setError('You must confirm under the student honor code that this item belongs to you.');
       return;
     }
-
-    try {\n      await submitClaim({
-      itemId: item.id,
-      itemTitle: item.title,
-      itemCategory: item.category,
-      itemCampusLocation: item.campusLocation,
-      proofDescription: proofDescription.trim(),
-      proofDocumentUrl: proofDocumentUrl || undefined
-    });
-
-    onClose();
+    try {
+      await submitClaim({
+        itemId: item.id,
+        itemTitle: item.title,
+        itemCategory: item.category,
+        itemCampusLocation: item.campusLocation,
+        proofDescription: proofDescription.trim(),
+        proofDocumentUrl: proofDocumentUrl || undefined
+      });
+      onClose();
+    } catch (err: any) {
+      setError(err?.message || 'Unable to submit your claim.');
+    }
   };
 
   return (
