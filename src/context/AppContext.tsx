@@ -211,15 +211,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (profile?.role === 'admin') {
         const { data, error } = await supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(300);
         if (error) throw error;
-        logs = (data || []).map((row: any) => ({
+        logs = (data || []).map((row: any) => {
+          const actor = profileById.get(row.actor_id) as StudentUser | undefined;
+          return {
           id: row.id,
           timestamp: row.created_at,
-          actor: (profileById.get(row.actor_id) as StudentUser | undefined)?.fullName || 'System',
-          actorRole: 'Administrator',
+          actor: actor?.fullName || 'System',
+          actorRole: actor?.role === 'admin' ? 'Administrator' : 'Student',
           action: row.action,
           targetId: row.target_id || '',
           details: row.details
-        }));
+        }; });
       }
 
       setCurrentUser(profile);
