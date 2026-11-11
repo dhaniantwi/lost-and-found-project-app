@@ -171,6 +171,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 {authStage === 'form' ? (
                   <>
+                    {mode === 'signin' && (
+                      <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs font-bold text-blue-950">
+                        Password + email code
+                        <span className="mt-1 block text-[11px] font-medium text-blue-800/75">Enter your password first, then verify the code sent to your email.</span>
+                      </div>
+                    )}
+
                     {mode === 'signup' && (
                       <>
                         <div className="mb-1 flex items-center gap-2 text-xs font-bold text-slate-800"><GraduationCap className="h-4 w-4 text-blue-800" /> Student information</div>
