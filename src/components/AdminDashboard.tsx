@@ -92,15 +92,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
   });
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 max-w-full overflow-x-clip space-y-4 sm:space-y-6">
       {/* Admin Command Bar */}
-      <div className="bg-slate-900 text-white p-6 rounded-2xl border border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-slate-900 text-white p-4 sm:p-6 rounded-2xl border border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-amber-400 mb-1">
             <ShieldCheck className="w-4 h-4" />
             <span>Directorate of University Security · Admin Desk</span>
           </div>
-          <h2 className="text-xl font-bold text-white">Central Security Operations & Verification Console</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-white break-words">Central Security Operations & Verification Console</h2>
           <p className="text-xs text-slate-400 mt-0.5">
             Logged in as <strong className="text-white">{currentUser.fullName}</strong> ({currentUser.studentId})
           </p>
@@ -110,8 +110,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
       </div>
 
       {/* KPI Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
+        <div className="min-w-0 bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-xs text-slate-500 font-medium">Pending Claims Queue</div>
           <div className="text-2xl font-bold text-amber-600 font-mono tabular-nums mt-1">
             {pendingClaims.length}
@@ -145,7 +145,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
       </div>
 
       {/* Admin Subtabs */}
-      <div className="flex items-center gap-2 overflow-x-auto border-b border-slate-200 pb-2 text-xs font-semibold">
+      <div className="flex max-w-full min-w-0 items-center gap-2 overflow-x-auto overscroll-x-contain border-b border-slate-200 pb-2 text-xs font-semibold">
         <button
           onClick={() => setActiveTab('matches')}
           className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap ${
