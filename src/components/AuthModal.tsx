@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { UCC_HALLS } from '../data/seedData';
 import campusHero from '../assets/images/ucc_campus_hero_1794334426172.jpg';
@@ -25,8 +25,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [department, setDepartment] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [authStage, setAuthStage] = useState<'form' | 'otp'>('form');
+  const [authStage, setAuthStage] = useState<'form' | 'otp' | 'success'>('form');
   const [otp, setOtp] = useState('');
+  const [otpExpiresAt, setOtpExpiresAt] = useState<number | null>(null);
+  const [secondsRemaining, setSecondsRemaining] = useState(180);
+
+  useEffect(() => {
+    if (authStage !== 'otp' || otpExpiresAt === null) return;
+    const updateCountdown = () => {
+      setSecondsRemaining(Math.max(0, Math.ceil((otpExpiresAt - Date.now()) / 1000)));
+    };
+    updateCountdown();
+    const interval = window.setInterval(updateCountdown, 1000);
+    return () => window.clearInterval(interval);
+  }, [authStage, otpExpiresAt]);
   const [otpFlow, setOtpFlow] = useState<'signup' | 'magiclink'>('magiclink');
 
   if (!isOpen) return null;
@@ -37,6 +49,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setShowPassword(false);
     setAuthStage('form');
     setOtp('');
+    setOtpExpiresAt(null);
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -46,18 +59,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     try {
       if (authStage === 'otp') {
         if (!/^\d{6,8}$/.test(otp.trim())) throw new Error('Enter the verification code from your email.');
+        if (secondsRemaining <= 0) throw new Error('This verification code has expired. Return to your account details and request a new code.');
         await verifyEmailOtp(email, otp, otpFlow);
-        onClose(true);
+        setAuthStage('success');
       } else if (mode === 'signin') {
         await signIn(email, password);
         setOtpFlow('magiclink');
         setOtp('');
+        setOtpExpiresAt(Date.now() + 180 * 1000);
+        setSecondsRemaining(180);
         setAuthStage('otp');
       } else {
         if (password.length < 8) throw new Error('Use a password with at least 8 characters.');
         await signUp({ email, password, fullName, studentId, phone, hallOfResidence: hall, department });
         setOtpFlow('signup');
         setOtp('');
+        setOtpExpiresAt(Date.now() + 180 * 1000);
+        setSecondsRemaining(180);
         setAuthStage('otp');
       }
     } catch (err: any) {
@@ -169,7 +187,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                {authStage === 'form' ? (
+                {authStage === 'success' ? (
+                  <div className="space-y-5 py-3 text-center" role="status" aria-live="polite">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                      <ShieldCheck className="h-8 w-8" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-slate-950">You're successfully signed in!</h3>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">Your email has been verified and your CampusFind account is ready.</p>
+                    </div>
+                    <button type="button" onClick={() => onClose(true)} className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-700 to-emerald-600 py-4 text-sm font-bold text-white shadow-lg transition hover:-translate-y-0.5">
+                      Continue to CampusFind <ArrowRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : authStage === 'form' ? (
                   <>
                     {mode === 'signin' && (
                       <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs font-bold text-blue-950">
@@ -211,18 +242,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
                       <div className="flex items-center gap-2 text-sm font-bold text-blue-950"><ShieldCheck className="h-4 w-4" /> Check your email</div>
                       <p className="mt-2 text-xs leading-6 text-blue-900/75">We sent a one-time verification code to <strong>{email}</strong>. Enter the code below to {otpFlow === 'signup' ? 'activate your account' : 'finish signing in'}.</p>
+                      <div className={`mt-3 flex items-center justify-between rounded-xl px-3 py-2 text-xs font-bold ${secondsRemaining > 0 ? 'bg-white text-blue-950' : 'bg-rose-100 text-rose-700'}`}>
+                        <span>{secondsRemaining > 0 ? 'Code expires in' : 'Code expired'}</span>
+                        <span className="font-mono tabular-nums">{Math.floor(secondsRemaining / 60).toString().padStart(2, '0')}:{(secondsRemaining % 60).toString().padStart(2, '0')}</span>
+                      </div>
                     </div>
                     <label className={labelClass}>Email verification code
-                      <input required type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={8} value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 8))} placeholder="Enter the code from your email" className={`${fieldClass} text-center text-lg font-bold tracking-[.35em]`} />
+                      <input required disabled={secondsRemaining <= 0 || busy} type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={8} value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 8))} placeholder="Enter the code from your email" className={`${fieldClass} text-center text-lg font-bold tracking-[.35em]`} />
                     </label>
-                    <button type="button" onClick={() => { setAuthStage('form'); setOtp(''); setError(''); }} className="text-xs font-semibold text-blue-800 transition hover:text-blue-950">← Return to account details</button>
+                    <button type="button" onClick={() => { setAuthStage('form'); setOtp(''); setOtpExpiresAt(null); setError(''); }} className="text-xs font-semibold text-blue-800 transition hover:text-blue-950">← Return to account details</button>
                   </div>
                 )}
 
-                {error && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs leading-relaxed text-rose-700">{error}</div>}
+                {authStage !== 'success' && error && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs leading-relaxed text-rose-700">{error}</div>}
 
-                <button disabled={busy} type="submit" className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-900 py-4 text-sm font-bold text-white shadow-lg shadow-blue-950/20 transition duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-950/25 disabled:cursor-wait disabled:opacity-60">
-                  {busy ? 'Please wait…' : authStage === 'otp' ? 'Verify code and continue' : mode === 'signin' ? 'Continue to email verification' : 'Create my account'}
+                <button disabled={busy || (authStage === 'otp' && secondsRemaining <= 0) || authStage === 'success'} type="submit" className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-900 py-4 text-sm font-bold text-white shadow-lg shadow-blue-950/20 transition duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-950/25 disabled:cursor-wait disabled:opacity-60">
+                  {busy ? 'Please wait…' : authStage === 'otp' ? (secondsRemaining <= 0 ? 'Code expired' : 'Verify code and continue') : mode === 'signin' ? 'Continue to email verification' : 'Create my account'}
                   {!busy && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
                 </button>
               </form>
