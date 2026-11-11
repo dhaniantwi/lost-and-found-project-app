@@ -94,7 +94,7 @@ export const MatchReviewQueue: React.FC<MatchReviewQueueProps> = () => {
             {result === 'match' ? 'Same' : result === 'different' ? 'Different' : 'Not supplied'}
           </span>
         </div>
-        <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="grid grid-cols-1 min-w-0 gap-2 text-xs sm:grid-cols-2">
           <div className="min-w-0"><div className="text-[10px] uppercase text-slate-400 mb-1">Lost</div><div className="font-semibold text-slate-800 break-words">{left || 'Not provided'}</div></div>
           <div className="min-w-0"><div className="text-[10px] uppercase text-slate-400 mb-1">Found</div><div className="font-semibold text-slate-800 break-words">{right || 'Not provided'}</div></div>
         </div>
@@ -185,7 +185,7 @@ export const MatchReviewQueue: React.FC<MatchReviewQueueProps> = () => {
           <button onClick={() => refreshData()} disabled={loading} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-950 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-900 disabled:opacity-50"><RefreshCw className="w-3.5 h-3.5" /> Check for candidates</button>
         </div>
       ) : (
-        <div className="grid w-full min-w-0 grid-cols-1 xl:grid-cols-[290px_minmax(0,1fr)] gap-3 sm:gap-4 items-start">
+        <div className="grid w-full min-w-0 grid-cols-1 gap-3 sm:gap-4 xl:grid-cols-[minmax(250px,290px)_minmax(0,1fr)] items-start">
           <aside className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
             <div className="flex items-center justify-between px-1 pb-3">
               <div><h4 className="text-xs font-extrabold text-slate-900">Candidate matches</h4><p className="text-[10px] text-slate-400 mt-0.5">Select a pair to inspect</p></div>
@@ -222,7 +222,7 @@ export const MatchReviewQueue: React.FC<MatchReviewQueueProps> = () => {
                 <div className="bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900 text-white p-4 sm:p-5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div><div className="text-[10px] font-bold uppercase tracking-[0.15em] text-blue-200">Selected candidate · {activeSuggestion.id.slice(0, 8)}</div><h4 className="text-lg font-extrabold mt-1">{confidenceLabel(activeSuggestion.score)}</h4><p className="text-[11px] text-slate-300 mt-1">Overall score calculated by the CampusFind matching engine</p></div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex min-w-0 flex-wrap items-center gap-3">
                       <div className="relative w-24 h-24 shrink-0">
                         <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
                           <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.13)" strokeWidth="9" />
@@ -248,7 +248,7 @@ export const MatchReviewQueue: React.FC<MatchReviewQueueProps> = () => {
                   {comparison('Campus location', lost.campusLocation, found.campusLocation, <MapPin className="w-3.5 h-3.5" />)}
                   <div className="rounded-xl border border-slate-200 bg-white p-3">
                     <div className="flex items-center justify-between gap-2 mb-2"><div className="flex items-center gap-2 text-xs font-semibold text-slate-600"><Timer className="w-3.5 h-3.5" /> Reported event dates</div><span className="rounded-full border border-slate-200 bg-slate-50 text-slate-600 px-2 py-0.5 text-[10px] font-bold">Timeline</span></div>
-                    <div className="grid grid-cols-2 gap-2 text-xs"><div><div className="text-[10px] uppercase text-slate-400 mb-1">Lost</div><div className="font-semibold text-slate-800">{lost.dateEvent || 'Not provided'}</div></div><div><div className="text-[10px] uppercase text-slate-400 mb-1">Found</div><div className="font-semibold text-slate-800">{found.dateEvent || 'Not provided'}</div></div></div>
+                    <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2"><div><div className="text-[10px] uppercase text-slate-400 mb-1">Lost</div><div className="font-semibold text-slate-800">{lost.dateEvent || 'Not provided'}</div></div><div><div className="text-[10px] uppercase text-slate-400 mb-1">Found</div><div className="font-semibold text-slate-800">{found.dateEvent || 'Not provided'}</div></div></div>
                     <div className="mt-2 text-[10px] text-slate-500">{daysApart(lost.dateEvent, found.dateEvent) === null ? 'Date difference unavailable' : `${daysApart(lost.dateEvent, found.dateEvent)} day(s) between reported event dates`}</div>
                   </div>
                 </div>
