@@ -14,6 +14,8 @@ interface AppContextType {
   notifications: UserNotification[];
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithEmailOtp: (email: string) => Promise<void>;
+  verifyEmailOtp: (email: string, token: string, flow: 'signup' | 'magiclink') => Promise<void>;
   signUp: (details: { email: string; password: string; fullName: string; studentId: string; phone: string; hallOfResidence: string; department: string }) => Promise<void>;
   signOut: () => Promise<void>;
   refreshData: () => Promise<void>;
@@ -303,29 +305,64 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     refreshData();
   }, [refreshData]);
 
+  const invokeCampusFindAuth = async (payload: Record<string, unknown>) => {
+    const { data, error } = await supabase.functions.invoke('campusfind-auth', { body: payload });
+    if (error) {
+      let message = error.message || 'Authentication request failed.';
+      try {
+        const response = (error as any).context;
+        const details = response?.json ? await response.json() : null;
+        if (details?.error) message = details.error;
+      } catch {
+        // Keep the SDK error if the response body is unavailable.
+      }
+      throw new Error(message);
+    }
+    if (data?.error) throw new Error(data.error);
+    return data;
+  };
+
+  // Password validation happens on the Edge Function; no browser session is issued yet.
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    await invokeCampusFindAuth({ action: 'password-otp', email: email.trim(), password });
+    showNotification('Password accepted. Check your email for the verification code.');
+  };
+
+  const signInWithEmailOtp = async (email: string) => {
+    const data = await invokeCampusFindAuth({ action: 'email-otp', email: email.trim() });
+    showNotification(data?.message || 'If an active account exists, a verification code will arrive shortly.');
+  };
+
+  const verifyEmailOtp = async (email: string, token: string, flow: 'signup' | 'magiclink') => {
+    const data = await invokeCampusFindAuth({
+      action: 'verify-otp',
+      email: email.trim(),
+      token: token.trim(),
+      flow
+    });
+    if (!data?.session?.access_token || !data?.session?.refresh_token) {
+      throw new Error('Verification succeeded but no secure login session was returned. Please try again.');
+    }
+    const { error } = await supabase.auth.setSession({
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token
+    });
     if (error) throw error;
-    showNotification('Signed in successfully.');
+    showNotification('Email verified. You are now signed in.');
   };
 
   const signUp = async (details: { email: string; password: string; fullName: string; studentId: string; phone: string; hallOfResidence: string; department: string }) => {
-    const { error } = await supabase.auth.signUp({
+    await invokeCampusFindAuth({
+      action: 'signup',
       email: details.email.trim(),
       password: details.password,
-      options: {
-        emailRedirectTo: new URL(import.meta.env.BASE_URL, window.location.origin).toString(),
-        data: {
-          full_name: details.fullName.trim(),
-          student_id: details.studentId.trim(),
-          phone: details.phone.trim(),
-          hall_of_residence: details.hallOfResidence,
-          department: details.department.trim()
-        }
-      }
+      fullName: details.fullName,
+      studentId: details.studentId,
+      phone: details.phone,
+      hallOfResidence: details.hallOfResidence,
+      department: details.department
     });
-    if (error) throw error;
-    showNotification('Account request submitted. Check your email if confirmation is required.');
+    showNotification('Verification code sent. Check your email to activate your account.');
   };
 
   const signOut = async () => {
@@ -502,7 +539,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider value={{
       items, claims, users, currentUser, authUser, auditLogs, matchSuggestions, notifications, loading,
-      signIn, signUp, signOut, refreshData, addItemReport, updateItemStatus,
+      signIn, signInWithEmailOtp, verifyEmailOtp, signUp, signOut, refreshData, addItemReport, updateItemStatus,
       deleteItemReport, submitClaim, reviewClaim, markItemRecovered, reviewMatchSuggestion, markNotificationRead,
       notification, showNotification
     }}>
