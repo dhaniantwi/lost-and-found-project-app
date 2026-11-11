@@ -13,7 +13,7 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
-  const { signIn, signUp, showNotification } = useApp();
+  const { signIn, signInWithEmailOtp, verifyEmailOtp, signUp, showNotification } = useApp();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,6 +25,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [department, setDepartment] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [authStage, setAuthStage] = useState<'form' | 'otp'>('form');
+  const [otp, setOtp] = useState('');
+  const [otpFlow, setOtpFlow] = useState<'signup' | 'magiclink'>('magiclink');
+  const [loginMethod, setLoginMethod] = useState<'password' | 'email'>('password');
 
   if (!isOpen) return null;
 
@@ -32,6 +36,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setMode(next);
     setError('');
     setShowPassword(false);
+    setAuthStage('form');
+    setOtp('');
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -39,16 +45,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setError('');
     setBusy(true);
     try {
-      if (mode === 'signin') {
-        await signIn(email, password);
+      if (authStage === 'otp') {
+        if (!/^\\d{6,8}$/.test(otp.trim())) throw new Error('Enter the verification code from your email.');
+        await verifyEmailOtp(email, otp, otpFlow);
         onClose(true);
+      } else if (mode === 'signin') {
+        if (loginMethod === 'email') {
+          await signInWithEmailOtp(email);
+          setOtpFlow('magiclink');
+        } else {
+          await signIn(email, password);
+          setOtpFlow('magiclink');
+        }
+        setOtp('');
+        setAuthStage('otp');
       } else {
         if (password.length < 8) throw new Error('Use a password with at least 8 characters.');
         await signUp({ email, password, fullName, studentId, phone, hallOfResidence: hall, department });
-        showNotification('Registration submitted. If email confirmation is enabled, verify your email before signing in.');
-        switchMode('signin');
-        setPassword('');
-        setShowPassword(false);
+        setOtpFlow('signup');
+        setOtp('');
+        setAuthStage('otp');
       }
     } catch (err: any) {
       setError(err?.message || 'Authentication failed. Please try again.');
@@ -154,41 +170,67 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
             <div className="px-6 pb-7 pt-6 sm:px-9 sm:pb-9">
               <div className="mb-6 grid grid-cols-2 rounded-2xl bg-slate-100 p-1.5">
-                <button type="button" onClick={() => switchMode('signin')} className={`rounded-xl py-3 text-xs font-bold transition-all ${mode === 'signin' ? 'bg-white text-slate-950 shadow-md shadow-slate-200/80' : 'text-slate-500 hover:text-slate-900'}`}>Sign in</button>
-                <button type="button" onClick={() => switchMode('signup')} className={`rounded-xl py-3 text-xs font-bold transition-all ${mode === 'signup' ? 'bg-white text-slate-950 shadow-md shadow-slate-200/80' : 'text-slate-500 hover:text-slate-900'}`}>Create account</button>
+                <button type="button" disabled={authStage === 'otp'} onClick={() => switchMode('signin')} className={`rounded-xl py-3 text-xs font-bold transition-all ${mode === 'signin' ? 'bg-white text-slate-950 shadow-md shadow-slate-200/80' : 'text-slate-500 hover:text-slate-900'} disabled:opacity-50`}>Sign in</button>
+                <button type="button" disabled={authStage === 'otp'} onClick={() => switchMode('signup')} className={`rounded-xl py-3 text-xs font-bold transition-all ${mode === 'signup' ? 'bg-white text-slate-950 shadow-md shadow-slate-200/80' : 'text-slate-500 hover:text-slate-900'} disabled:opacity-50`}>Create account</button>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                {mode === 'signup' && (
+                {authStage === 'form' ? (
                   <>
-                    <div className="mb-1 flex items-center gap-2 text-xs font-bold text-slate-800"><GraduationCap className="h-4 w-4 text-blue-800" /> Student information</div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <label className={labelClass}>Full name<input required value={fullName} onChange={e => setFullName(e.target.value)} autoComplete="name" placeholder="Your full name" className={fieldClass} /></label>
-                      <label className={labelClass}>UCC index number<input required value={studentId} onChange={e => setStudentId(e.target.value)} placeholder="e.g. BS/IT/24/0001" className={fieldClass} /></label>
-                      <label className={labelClass}>Phone number<input value={phone} onChange={e => setPhone(e.target.value)} autoComplete="tel" placeholder="Your contact number" className={fieldClass} /></label>
-                      <label className={labelClass}>Hall / residence<select value={hall} onChange={e => setHall(e.target.value)} className={fieldClass}>{UCC_HALLS.map(value => <option key={value}>{value}</option>)}</select></label>
-                    </div>
-                    <label className={labelClass}>Department / programme<input required value={department} onChange={e => setDepartment(e.target.value)} placeholder="Your academic programme" className={fieldClass} /></label>
-                  </>
-                )}
+                    {mode === 'signin' && (
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-1.5">
+                        <div className="grid grid-cols-2 gap-1">
+                          <button type="button" onClick={() => setLoginMethod('password')} className={`rounded-lg px-2 py-2.5 text-[11px] font-bold transition ${loginMethod === 'password' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>Password + email code</button>
+                          <button type="button" onClick={() => setLoginMethod('email')} className={`rounded-lg px-2 py-2.5 text-[11px] font-bold transition ${loginMethod === 'email' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>Email code only</button>
+                        </div>
+                      </div>
+                    )}
 
-                <label className={labelClass}>Email address
-                  <input required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@stu.ucc.edu.gh" className={fieldClass} />
-                </label>
-                <label className={labelClass}>Password
-                  <span className="relative mt-1.5 block">
-                    <input required type={showPassword ? 'text' : 'password'} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" className={`${fieldClass} pr-12`} />
-                    <button type="button" onClick={() => setShowPassword(value => !value)} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} className="absolute inset-y-0 right-1 flex items-center justify-center rounded-lg px-3 text-slate-400 transition hover:text-blue-900">
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </span>
-                  {mode === 'signup' && <span className="mt-1.5 block text-[10px] font-medium normal-case tracking-normal text-slate-400">Use at least 8 characters. Your password is secured by Supabase Auth.</span>}
-                </label>
+                    {mode === 'signup' && (
+                      <>
+                        <div className="mb-1 flex items-center gap-2 text-xs font-bold text-slate-800"><GraduationCap className="h-4 w-4 text-blue-800" /> Student information</div>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <label className={labelClass}>Full name<input required value={fullName} onChange={e => setFullName(e.target.value)} autoComplete="name" placeholder="Your full name" className={fieldClass} /></label>
+                          <label className={labelClass}>UCC index number<input required value={studentId} onChange={e => setStudentId(e.target.value)} placeholder="e.g. BS/IT/24/0001" className={fieldClass} /></label>
+                          <label className={labelClass}>Phone number<input value={phone} onChange={e => setPhone(e.target.value)} autoComplete="tel" placeholder="Your contact number" className={fieldClass} /></label>
+                          <label className={labelClass}>Hall / residence<select value={hall} onChange={e => setHall(e.target.value)} className={fieldClass}>{UCC_HALLS.map(value => <option key={value}>{value}</option>)}</select></label>
+                        </div>
+                        <label className={labelClass}>Department / programme<input required value={department} onChange={e => setDepartment(e.target.value)} placeholder="Your academic programme" className={fieldClass} /></label>
+                      </>
+                    )}
+
+                    <label className={labelClass}>Email address
+                      <input required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@stu.ucc.edu.gh" className={fieldClass} />
+                    </label>
+                    {(mode === 'signup' || loginMethod === 'password') && (
+                      <label className={labelClass}>Password
+                        <span className="relative mt-1.5 block">
+                          <input required type={showPassword ? 'text' : 'password'} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" className={`${fieldClass} pr-12`} />
+                          <button type="button" onClick={() => setShowPassword(value => !value)} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} className="absolute inset-y-0 right-1 flex items-center justify-center rounded-lg px-3 text-slate-400 transition hover:text-blue-900">
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </span>
+                        {mode === 'signup' && <span className="mt-1.5 block text-[10px] font-medium normal-case tracking-normal text-slate-400">Use at least 8 characters. Your password is secured by Supabase Auth.</span>}
+                      </label>
+                    )}
+                  </>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                      <div className="flex items-center gap-2 text-sm font-bold text-blue-950"><ShieldCheck className="h-4 w-4" /> Check your email</div>
+                      <p className="mt-2 text-xs leading-6 text-blue-900/75">We sent a one-time verification code to <strong>{email}</strong>. Enter the code below to {otpFlow === 'signup' ? 'activate your account' : 'finish signing in'}.</p>
+                    </div>
+                    <label className={labelClass}>Email verification code
+                      <input required type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={8} value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 8))} placeholder="Enter the code from your email" className={`${fieldClass} text-center text-lg font-bold tracking-[.35em]`} />
+                    </label>
+                    <button type="button" onClick={() => { setAuthStage('form'); setOtp(''); setError(''); }} className="text-xs font-semibold text-blue-800 transition hover:text-blue-950">← Back to change details or request another code</button>
+                  </div>
+                )}
 
                 {error && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs leading-relaxed text-rose-700">{error}</div>}
 
                 <button disabled={busy} type="submit" className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-900 py-4 text-sm font-bold text-white shadow-lg shadow-blue-950/20 transition duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-950/25 disabled:cursor-wait disabled:opacity-60">
-                  {busy ? 'Please wait…' : mode === 'signin' ? 'Sign in to CampusFind' : 'Create my account'}
+                  {busy ? 'Please wait…' : authStage === 'otp' ? 'Verify code and continue' : mode === 'signin' ? (loginMethod === 'email' ? 'Send email verification code' : 'Continue to email verification') : 'Create my account'}
                   {!busy && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
                 </button>
               </form>
@@ -196,7 +238,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               <div className="mt-6 flex items-center justify-center gap-2 text-[10px] font-medium text-slate-400">
                 <LockKeyhole className="h-3.5 w-3.5" /> Your account details are protected
               </div>
-              <p className="mt-4 text-center text-[10px] leading-relaxed text-slate-400">Administrator access is assigned separately. CampusFind staff will never ask you for your password.</p>
+              <p className="mt-4 text-center text-[10px] leading-relaxed text-slate-400">Every sign-in requires email verification. Administrator access is assigned separately.</p>
             </div>
           </div>
           <button type="button" onClick={() => onClose(false)} className="mx-auto mt-5 flex items-center gap-2 text-xs font-semibold text-white/70 transition hover:text-white">
