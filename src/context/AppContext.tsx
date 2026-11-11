@@ -20,7 +20,7 @@ interface AppContextType {
   refreshData: () => Promise<void>;
   addItemReport: (report: Omit<ItemReport, 'id' | 'dateReported' | 'status' | 'claimsCount'>) => Promise<ItemReport>;
   updateItemStatus: (itemId: string, status: ItemStatus) => Promise<void>;
-  deleteItemReport: (itemId: string) => Promise<void>;
+  deleteItemReport: (itemId: string, reason: string) => Promise<void>;
   submitClaim: (claimData: { itemId: string; itemTitle: string; itemCategory: any; itemCampusLocation: string; proofDescription: string; proofDocumentUrl?: string }) => Promise<Claim>;
   reviewClaim: (
     claimId: string,
@@ -420,11 +420,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification(`Item report status updated to ${status}.`);
   };
 
-  const deleteItemReport = async (itemId: string) => {
-    const { error } = await supabase.from('item_reports').delete().eq('id', itemId);
-    if (error) throw error;
+  const deleteItemReport = async (itemId: string, reason: string) => {
+    if (!authUser || currentUser?.role !== 'admin') {
+      throw new Error('Only an administrator can remove a CampusFind submission.');
+    }
+    if (!reason.trim()) throw new Error('Please provide a reason for removing this submission.');
+
+    const { data: report, error: reportError } = await supabase
+      .from('item_reports')
+      .select('id, title, image_path')
+      .eq('id', itemId)
+      .single();
+    if (reportError) throw reportError;
+
+    // Remove the private image through the Storage API before deleting its database record.
+    if (report.image_path && !/^(https?:|data:|\\/)/.test(report.image_path)) {
+      const { error: photoError } = await supabase.storage
+        .from('item-photos')
+        .remove([report.image_path]);
+      if (photoError) throw new Error(`The submission photo could not be removed: ${photoError.message}`);
+    }
+
+    const { error: deleteError } = await supabase
+      .from('item_reports')
+      .delete()
+      .eq('id', itemId);
+    if (deleteError) throw deleteError;
+
+    const { error: auditError } = await supabase.from('audit_logs').insert({
+      actor_id: authUser.id,
+      action: 'REPORT_DELETED',
+      target_id: itemId,
+      details: `Administrator removed submission "${report.title}". Reason: ${reason.trim()}`
+    });
+    if (auditError) {
+      console.error('Submission was removed, but its audit entry could not be saved:', auditError);
+    }
+
     await refreshData();
-    showNotification('Report deleted.');
+    showNotification('Submission and its uploaded photo have been removed.');
   };
 
   const submitClaim = async (claimData: { itemId: string; itemTitle: string; itemCategory: any; itemCampusLocation: string; proofDescription: string; proofDocumentUrl?: string }) => {
