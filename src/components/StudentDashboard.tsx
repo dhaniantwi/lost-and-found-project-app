@@ -43,9 +43,20 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
     <div className="w-full min-w-0 max-w-full space-y-5 sm:space-y-6">
       {/* Student dashboard welcome panel */}
       <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 p-5 text-white shadow-xl sm:p-7">
+        <video
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center opacity-35"
+          src="https://videos.pexels.com/video-files/7969427/7969427-uhd_2160_3840_30fps.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-slate-950/90 via-blue-950/75 to-indigo-950/85" />
         <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-cyan-400/15 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 left-1/3 h-52 w-52 rounded-full bg-blue-400/15 blur-3xl" />
-        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[.18em] text-cyan-200"><User className="h-3.5 w-3.5" /> Student workspace</div>
             <p className="text-xs font-medium text-blue-200">Your CampusFind overview</p>
@@ -54,7 +65,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           </div>
           <button onClick={onOpenReportModal} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-3 text-xs font-extrabold text-slate-950 shadow-lg shadow-black/20 transition hover:bg-amber-300"><PlusCircle className="h-4 w-4" /> Submit a report</button>
         </div>
-        <div className="relative mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+        <div className="relative z-10 mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
           {[
             { label: 'My reports', value: myReports.length, note: `${pendingReports} still active`, icon: <Package className="h-4 w-4" /> },
             { label: 'Recovered', value: recoveredReports, note: 'Items marked recovered', icon: <CheckCircle2 className="h-4 w-4" /> },
