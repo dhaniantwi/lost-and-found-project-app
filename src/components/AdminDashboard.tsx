@@ -95,8 +95,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
     <div className="w-full min-w-0 max-w-full overflow-x-clip space-y-4 sm:space-y-6">
       {/* Admin Command Bar */}
       <div className="relative isolate overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 text-white p-5 sm:p-7 rounded-3xl border border-slate-800 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <video
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center opacity-30"
+          src="https://videos.pexels.com/video-files/7969427/7969427-uhd_2160_3840_30fps.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-slate-950/90 via-blue-950/75 to-indigo-950/85" />
         <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
-        <div className="relative min-w-0">
+        <div className="relative z-10 min-w-0">
           <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[.16em] text-amber-300 mb-3">
             <ShieldCheck className="w-4 h-4" />
             <span>Directorate of University Security · Admin Desk</span>
