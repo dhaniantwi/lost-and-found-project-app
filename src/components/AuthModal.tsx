@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { UCC_HALLS } from '../data/seedData';
-import campusHero from '../assets/images/ucc_campus_hero_1794334426172.jpg';
 import {
   X, ShieldCheck, GraduationCap, Eye, EyeOff, ArrowRight,
   Search, PackageCheck, MapPin, Sparkles, LockKeyhole, ArrowLeft
@@ -91,7 +90,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   return (
     <div className="campus-auth-overlay fixed inset-0 z-[60] overflow-y-auto bg-slate-950">
       <div className="campus-auth-scene absolute inset-0">
-        <img src={campusHero} alt="" className="campus-auth-backdrop" />
+        <video
+          className="campus-auth-backdrop"
+          src="https://videos.pexels.com/video-files/7969427/7969427-uhd_2160_3840_30fps.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+        />
         <div className="campus-auth-shade" />
         <div className="campus-auth-orb campus-auth-orb-one" />
         <div className="campus-auth-orb campus-auth-orb-two" />
