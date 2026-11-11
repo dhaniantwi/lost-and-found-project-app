@@ -14,7 +14,6 @@ interface AppContextType {
   notifications: UserNotification[];
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signInWithEmailOtp: (email: string) => Promise<void>;
   verifyEmailOtp: (email: string, token: string, flow: 'signup' | 'magiclink') => Promise<void>;
   signUp: (details: { email: string; password: string; fullName: string; studentId: string; phone: string; hallOfResidence: string; department: string }) => Promise<void>;
   signOut: () => Promise<void>;
@@ -328,11 +327,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification('Password accepted. Check your email for the verification code.');
   };
 
-  const signInWithEmailOtp = async (email: string) => {
-    const data = await invokeCampusFindAuth({ action: 'email-otp', email: email.trim() });
-    showNotification(data?.message || 'If an active account exists, a verification code will arrive shortly.');
-  };
-
   const verifyEmailOtp = async (email: string, token: string, flow: 'signup' | 'magiclink') => {
     const data = await invokeCampusFindAuth({
       action: 'verify-otp',
@@ -539,7 +533,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider value={{
       items, claims, users, currentUser, authUser, auditLogs, matchSuggestions, notifications, loading,
-      signIn, signInWithEmailOtp, verifyEmailOtp, signUp, signOut, refreshData, addItemReport, updateItemStatus,
+      signIn, verifyEmailOtp, signUp, signOut, refreshData, addItemReport, updateItemStatus,
       deleteItemReport, submitClaim, reviewClaim, markItemRecovered, reviewMatchSuggestion, markNotificationRead,
       notification, showNotification
     }}>
