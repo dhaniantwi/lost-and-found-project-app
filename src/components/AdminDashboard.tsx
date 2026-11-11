@@ -97,7 +97,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
       <div className="relative isolate overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 text-white p-5 sm:p-7 rounded-3xl border border-slate-800 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
         <video
           className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center opacity-30"
-          src="https://www.pexels.com/download/video/38684065/"
+          src="https://videos.pexels.com/video-files/7969427/7969427-uhd_2160_3840_30fps.mp4"
           autoPlay
           muted
           loop
