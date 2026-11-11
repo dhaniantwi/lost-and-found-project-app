@@ -135,8 +135,8 @@ export const MatchReviewQueue: React.FC<MatchReviewQueueProps> = () => {
   );
 
   return (
-    <div className="space-y-5">
-      <div className="relative overflow-hidden rounded-2xl bg-slate-950 text-white p-5 sm:p-7 shadow-xl">
+    <div className="w-full max-w-full min-w-0 overflow-x-clip space-y-4 sm:space-y-5">
+      <div className="relative overflow-hidden rounded-2xl bg-slate-950 text-white p-4 sm:p-7 shadow-xl">
         <div className="absolute -right-12 -top-20 w-64 h-64 rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
         <div className="absolute right-24 -bottom-28 w-64 h-64 rounded-full bg-cyan-400/10 blur-3xl pointer-events-none" />
         <div className="relative flex flex-col lg:flex-row lg:items-end justify-between gap-5">
@@ -144,35 +144,35 @@ export const MatchReviewQueue: React.FC<MatchReviewQueueProps> = () => {
             <div className="inline-flex items-center gap-2 rounded-full border border-blue-300/20 bg-blue-400/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-blue-200 mb-3">
               <Sparkles className="w-3.5 h-3.5" /> CampusFind intelligence layer
             </div>
-            <h3 className="text-2xl sm:text-3xl font-black tracking-tight">Match Command Centre</h3>
+            <h3 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight break-words">Match Command Centre</h3>
             <p className="text-xs sm:text-sm text-slate-300 mt-2 max-w-xl leading-relaxed">Review system-generated lost-and-found candidates, inspect the original evidence and make the final administrator decision.</p>
           </div>
           <button onClick={() => refreshData()} disabled={loading} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-xs font-bold text-white hover:bg-white/15 disabled:opacity-50">
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} /> Refresh live queue
           </button>
         </div>
-        <div className="relative grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
+        <div className="relative grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mt-5 sm:mt-6">
           {[
             { label: 'All candidates', value: matchSuggestions.length, icon: <ScanSearch className="w-4 h-4" />, tint: 'text-blue-200' },
             { label: 'Awaiting review', value: pendingCount, icon: <Clock3 className="w-4 h-4" />, tint: 'text-amber-200' },
             { label: 'Approved', value: approvedCount, icon: <CheckCircle2 className="w-4 h-4" />, tint: 'text-emerald-200' },
             { label: 'Rejected', value: rejectedCount, icon: <XCircle className="w-4 h-4" />, tint: 'text-rose-200' }
           ].map((metric) => (
-            <div key={metric.label} className="rounded-xl border border-white/10 bg-white/[0.07] p-3 backdrop-blur-sm">
-              <div className={`flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wide ${metric.tint}`}>{metric.icon}{metric.label}</div>
+            <div key={metric.label} className="min-w-0 rounded-xl border border-white/10 bg-white/[0.07] p-2.5 sm:p-3 backdrop-blur-sm">
+              <div className={`flex items-center gap-2 text-[9px] sm:text-[10px] leading-tight font-semibold uppercase tracking-wide ${metric.tint}`}>{metric.icon}{metric.label}</div>
               <div className="text-2xl font-black tabular-nums mt-2">{metric.value}</div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="flex-1 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-3 shadow-sm">
+      <div className="flex min-w-0 flex-col sm:flex-row gap-2 sm:gap-3">
+        <div className="min-w-0 flex-1 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-3 shadow-sm">
           <Search className="w-4 h-4 text-slate-400" />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search item, category or campus location..." className="w-full text-xs outline-none" />
         </div>
-        <div className="flex items-center gap-1 rounded-xl bg-slate-100 p-1">
-          <button onClick={() => setFilter('pending')} className={`rounded-lg px-3 py-2 text-xs font-bold transition-colors ${filter === 'pending' ? 'bg-white text-blue-950 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Pending ({pendingCount})</button>
+        <div className="flex w-full sm:w-auto min-w-0 items-center gap-1 rounded-xl bg-slate-100 p-1">
+          <button onClick={() => setFilter('pending')} className={`flex-1 sm:flex-none rounded-lg px-2 sm:px-3 py-2 text-[11px] sm:text-xs font-bold transition-colors text-center ${filter === 'pending' ? 'bg-white text-blue-950 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>Pending ({pendingCount})</button>
           <button onClick={() => setFilter('all')} className={`rounded-lg px-3 py-2 text-xs font-bold transition-colors ${filter === 'all' ? 'bg-white text-blue-950 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>All decisions</button>
         </div>
       </div>
@@ -185,8 +185,8 @@ export const MatchReviewQueue: React.FC<MatchReviewQueueProps> = () => {
           <button onClick={() => refreshData()} disabled={loading} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-950 px-4 py-2.5 text-xs font-bold text-white hover:bg-blue-900 disabled:opacity-50"><RefreshCw className="w-3.5 h-3.5" /> Check for candidates</button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 xl:grid-cols-[310px_minmax(0,1fr)] gap-4 items-start">
-          <aside className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        <div className="grid w-full min-w-0 grid-cols-1 xl:grid-cols-[290px_minmax(0,1fr)] gap-3 sm:gap-4 items-start">
+          <aside className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
             <div className="flex items-center justify-between px-1 pb-3">
               <div><h4 className="text-xs font-extrabold text-slate-900">Candidate matches</h4><p className="text-[10px] text-slate-400 mt-0.5">Select a pair to inspect</p></div>
               <span className="rounded-full bg-blue-50 text-blue-800 px-2 py-1 text-[10px] font-bold">{visibleSuggestions.length}</span>
@@ -197,7 +197,7 @@ export const MatchReviewQueue: React.FC<MatchReviewQueueProps> = () => {
                 const pairFound = itemById.get(suggestion.foundReportId)!;
                 const isActive = activeSuggestion?.id === suggestion.id;
                 return (
-                  <button key={suggestion.id} onClick={() => setActiveId(suggestion.id)} className={`w-full text-left rounded-xl border p-3 transition-all ${isActive ? 'border-blue-800 bg-blue-50 shadow-sm ring-1 ring-blue-800/10' : 'border-slate-100 bg-white hover:border-slate-300 hover:bg-slate-50'}`}>
+                  <button key={suggestion.id} onClick={() => setActiveId(suggestion.id)} className={`w-[250px] max-w-[82vw] shrink-0 snap-start text-left rounded-xl border p-3 transition-all sm:w-full sm:max-w-none sm:shrink ${isActive ? 'border-blue-800 bg-blue-50 shadow-sm ring-1 ring-blue-800/10' : 'border-slate-100 bg-white hover:border-slate-300 hover:bg-slate-50'}`}>
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-[10px] font-bold text-slate-500">MATCH · {suggestion.id.slice(0, 8).toUpperCase()}</span>
                       <span className={`text-sm font-black tabular-nums ${suggestion.score >= 80 ? 'text-emerald-700' : suggestion.score >= 60 ? 'text-blue-800' : 'text-amber-700'}`}>{suggestion.score}%</span>
@@ -217,7 +217,7 @@ export const MatchReviewQueue: React.FC<MatchReviewQueueProps> = () => {
           </aside>
 
           {activeSuggestion && lost && found && (
-            <section className="min-w-0 space-y-4">
+            <section className="w-full min-w-0 max-w-full space-y-3 sm:space-y-4">
               <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div className="bg-gradient-to-r from-slate-950 via-blue-950 to-slate-900 text-white p-4 sm:p-5">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -234,15 +234,15 @@ export const MatchReviewQueue: React.FC<MatchReviewQueueProps> = () => {
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 sm:p-4">
+                <div className="grid min-w-0 grid-cols-1 sm:grid-cols-2 gap-3 p-3 sm:p-4">
                   {renderReport(lost, 'lost')}
                   {renderReport(found, 'found')}
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm space-y-3">
+              <div className="min-w-0 rounded-2xl border border-slate-200 bg-white p-3 sm:p-5 shadow-sm space-y-3">
                 <div className="flex items-center justify-between gap-3"><div><h4 className="text-sm font-extrabold text-slate-900">Match evidence breakdown</h4><p className="text-[11px] text-slate-500 mt-1">Side-by-side report attributes. No extra factor scores are fabricated.</p></div><Layers3 className="w-5 h-5 text-blue-800" /></div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid min-w-0 grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
                   {comparison('Item category', lost.category, found.category, <Package className="w-3.5 h-3.5" />)}
                   {comparison('Colour', lost.color || 'Not specified', found.color || 'Not specified', <Palette className="w-3.5 h-3.5" />)}
                   {comparison('Campus location', lost.campusLocation, found.campusLocation, <MapPin className="w-3.5 h-3.5" />)}
@@ -259,10 +259,10 @@ export const MatchReviewQueue: React.FC<MatchReviewQueueProps> = () => {
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex min-w-0 flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div><div className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-blue-900" /><h4 className="text-sm font-extrabold text-slate-900">Administrator decision</h4></div><p className="text-[11px] text-slate-500 mt-1">Review the photos and evidence. The engine recommends; the admin decides.</p></div>
                   {activeSuggestion.status === 'pending' ? (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto">
                       <button onClick={() => openDecision(activeSuggestion, 'rejected')} className="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 px-3 py-2.5 text-xs font-bold text-rose-700 hover:bg-rose-50"><XCircle className="w-4 h-4" /> Reject suggestion</button>
                       <button onClick={() => openDecision(activeSuggestion, 'approved')} className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-700 px-3 py-2.5 text-xs font-bold text-white hover:bg-emerald-800"><CheckCircle2 className="w-4 h-4" /> Approve match</button>
                     </div>
@@ -279,8 +279,8 @@ export const MatchReviewQueue: React.FC<MatchReviewQueueProps> = () => {
       )}
 
       {selected && (
-        <div className="fixed inset-0 z-[90] bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white shadow-2xl p-5 space-y-4">
+        <div className="fixed inset-0 z-[90] bg-slate-950/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-2 sm:p-4 overflow-y-auto">
+          <div className="w-full max-w-lg max-h-[92dvh] overflow-y-auto rounded-2xl bg-white shadow-2xl p-4 sm:p-5 space-y-4">
             <div className="flex items-start justify-between gap-3">
               <div><h3 className="text-base font-bold text-slate-900">{decision === 'approved' ? 'Approve potential match?' : 'Reject potential match?'}</h3><p className="text-xs text-slate-500 mt-1">This records your administrator decision. It does not mark the item as recovered or approve an ownership claim.</p></div>
               <button onClick={() => setSelected(null)} className="text-slate-400 hover:text-slate-700" aria-label="Close">✕</button>
@@ -295,9 +295,9 @@ export const MatchReviewQueue: React.FC<MatchReviewQueueProps> = () => {
       )}
 
       {zoomedPhoto && (
-        <div className="fixed inset-0 z-[100] bg-slate-950/90 flex items-center justify-center p-4" onClick={() => setZoomedPhoto(null)}>
+        <div className="fixed inset-0 z-[100] bg-slate-950/90 flex items-center justify-center p-3 sm:p-4 overflow-y-auto" onClick={() => setZoomedPhoto(null)}>
           <button className="absolute top-5 right-5 text-white text-2xl" onClick={() => setZoomedPhoto(null)} aria-label="Close photo">×</button>
-          <div className="max-w-5xl w-full" onClick={(e) => e.stopPropagation()}><p className="text-white text-sm font-semibold mb-3">{zoomedPhoto.title} — uploaded report photo</p><img src={zoomedPhoto.url} alt={zoomedPhoto.title} className="max-h-[80vh] w-full object-contain rounded-xl bg-black" /></div>
+          <div className="w-full max-w-5xl min-w-0" onClick={(e) => e.stopPropagation()}><p className="text-white text-sm font-semibold mb-3">{zoomedPhoto.title} — uploaded report photo</p><img src={zoomedPhoto.url} alt={zoomedPhoto.title} className="max-h-[80vh] w-full object-contain rounded-xl bg-black" /></div>
         </div>
       )}
     </div>
