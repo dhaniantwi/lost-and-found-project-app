@@ -225,7 +225,6 @@ Deno.serve(async (req: Request) => {
     });
   } catch (error) {
     console.error("CampusFind auth error:", error);
-    const message = error instanceof Error ? error.message : "Unexpected authentication error.";
-    return reply(req, { error: message }, 500);
+    return reply(req, { error: "Authentication service is temporarily unavailable. Please try again." }, 500);
   }
 });
