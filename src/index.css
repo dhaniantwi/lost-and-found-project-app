@@ -1,15 +1,123 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@layer base {
-  body {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+:root {
+  font-family: 'DM Sans', 'Manrope', system-ui, -apple-system, sans-serif;
+  color: #101827;
+  background: #f4f6fb;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
 
-  code, pre, .font-mono {
-    font-family: 'JetBrains Mono', monospace;
-  }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  font-family: 'DM Sans', 'Manrope', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(219, 234, 254, .48), transparent 34rem),
+    radial-gradient(ellipse at 94% 8%, rgba(254, 243, 199, .28), transparent 28rem),
+    #f4f6fb;
+}
+
+button, input, select, textarea { font: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, .45);
+  outline-offset: 3px;
+}
+::selection { background: #172554; color: #fff; }
+code, pre, .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+/* CampusFind cinematic sign-in experience */
+.campus-auth-overlay { isolation: isolate; }
+.campus-auth-scene { z-index: -1; overflow: hidden; background: #07152c; }
+.campus-auth-backdrop {
+  position: absolute;
+  inset: -4%;
+  width: 108%;
+  height: 108%;
+  object-fit: cover;
+  object-position: center 42%;
+  opacity: .72;
+  filter: saturate(.85) contrast(1.08);
+  transform: scale(1.04);
+  animation: campus-scene-drift 24s ease-in-out infinite alternate;
+}
+.campus-auth-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(3, 10, 25, .94) 0%, rgba(5, 18, 39, .82) 44%, rgba(5, 15, 33, .72) 100%),
+    linear-gradient(0deg, rgba(4, 10, 24, .66), transparent 48%, rgba(4, 10, 24, .28));
+}
+.campus-auth-orb {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  filter: blur(1px);
+  animation: campus-orb-float 12s ease-in-out infinite alternate;
+}
+.campus-auth-orb-one {
+  width: 26rem; height: 26rem; top: -11rem; right: 7%;
+  border: 1px solid rgba(251, 191, 36, .2);
+  box-shadow: 0 0 100px rgba(251, 191, 36, .09), inset 0 0 90px rgba(251, 191, 36, .04);
+}
+.campus-auth-orb-two {
+  width: 19rem; height: 19rem; bottom: -9rem; left: 28%;
+  border: 1px solid rgba(147, 197, 253, .18);
+  box-shadow: 0 0 110px rgba(59, 130, 246, .12);
+  animation-delay: -5s;
+}
+.campus-auth-grain {
+  position: absolute;
+  inset: 0;
+  opacity: .12;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.92' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.2'/%3E%3C/svg%3E");
+}
+.campus-auth-copy { animation: campus-rise-in .8s cubic-bezier(.2,.75,.2,1) both; }
+.campus-auth-card-wrap { animation: campus-rise-in .9s .12s cubic-bezier(.2,.75,.2,1) both; }
+.campus-auth-feature {
+  display: flex; min-height: 5.25rem; flex-direction: column; justify-content: center; gap: .7rem;
+  border: 1px solid rgba(255,255,255,.16); border-radius: 1rem; padding: .9rem 1rem;
+  background: rgba(255,255,255,.075); backdrop-filter: blur(14px);
+  color: rgba(255,255,255,.88); font-size: .7rem; font-weight: 700;
+  transition: transform .25s ease, background .25s ease, border-color .25s ease;
+}
+.campus-auth-feature:hover { transform: translateY(-4px); background: rgba(255,255,255,.13); border-color: rgba(251,191,36,.4); }
+.campus-auth-card { animation: campus-card-glow 8s ease-in-out infinite; }
+@keyframes campus-scene-drift {
+  from { transform: scale(1.04) translate3d(-.5%, -.5%, 0); }
+  to { transform: scale(1.13) translate3d(.5%, .5%, 0); }
+}
+@keyframes campus-orb-float {
+  from { transform: translate3d(0, 0, 0) rotate(0deg); }
+  to { transform: translate3d(18px, -22px, 0) rotate(9deg); }
+}
+@keyframes campus-rise-in {
+  from { opacity: 0; transform: translate3d(0, 22px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes campus-card-glow {
+  0%, 100% { box-shadow: 0 35px 100px rgba(0,0,0,.38); }
+  50% { box-shadow: 0 38px 110px rgba(0,0,0,.46); }
+}
+@media (max-width: 1023px) {
+  .campus-auth-copy { max-width: 650px; }
+  .campus-auth-card-wrap { max-width: 560px; }
+}
+@media (max-width: 640px) {
+  .campus-auth-backdrop { object-position: 58% center; }
+  .campus-auth-shade { background: linear-gradient(180deg, rgba(3,10,25,.9), rgba(5,15,33,.84)); }
+  .campus-auth-copy h1 { font-size: clamp(2.7rem, 12vw, 4.25rem); }
+  .campus-auth-feature { min-height: 4.25rem; flex-direction: row; align-items: center; justify-content: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
