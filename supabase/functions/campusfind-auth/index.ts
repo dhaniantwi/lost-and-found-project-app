@@ -94,7 +94,7 @@ Deno.serve(async (req: Request) => {
     const ipHash = await sha256(clientIp);
 
     const isVerification = action === "verify-otp";
-    if (!["signup", "password-otp", "email-otp", "verify-otp"].includes(action)) {
+    if (!["signup", "password-otp", "verify-otp"].includes(action)) {
       return reply(req, { error: "Unsupported authentication action." }, 400);
     }
 
@@ -183,18 +183,6 @@ Deno.serve(async (req: Request) => {
 
       await sendCampusFindOtp(email, data.properties.email_otp, resendKey);
       return reply(req, { message: "Password accepted. A verification code has been sent to your email.", flow: "magiclink" });
-    }
-
-    if (action === "email-otp") {
-      const { data, error } = await admin.auth.admin.generateLink({ type: "magiclink", email });
-      if (error || !data?.properties?.email_otp) {
-        // Do not reveal whether an account exists for a passwordless login request.
-        console.info("CampusFind passwordless OTP not issued for requested address.");
-        return reply(req, { message: "If an active CampusFind account exists for that address, a verification code will arrive shortly.", flow: "magiclink" });
-      }
-
-      await sendCampusFindOtp(email, data.properties.email_otp, resendKey);
-      return reply(req, { message: "If an active CampusFind account exists for that address, a verification code will arrive shortly.", flow: "magiclink" });
     }
 
     const token = String(body?.token ?? "").trim();
