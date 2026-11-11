@@ -61,7 +61,7 @@ function CampusFindApp() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-blue-900 selection:text-white">
+    <div className="min-h-screen w-full min-w-0 overflow-x-clip bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-blue-900 selection:text-white">
       {notification && (
         <div role="status" className="fixed bottom-5 right-5 z-[70] max-w-md bg-slate-900 text-white px-4 py-3 rounded-xl shadow-lg border border-slate-700 flex items-center gap-3 text-xs">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
