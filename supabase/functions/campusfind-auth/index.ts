@@ -203,7 +203,7 @@ Deno.serve(async (req: Request) => {
       return reply(req, { error: "Enter the verification code from your email." }, 400);
     }
 
-    const { data, error } = await admin.auth.verifyOtp({
+    const { data, error } = await publicAuth.auth.verifyOtp({
       email,
       token,
       type: flow as "signup" | "magiclink",
