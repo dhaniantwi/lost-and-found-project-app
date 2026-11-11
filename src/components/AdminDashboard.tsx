@@ -353,9 +353,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
                           </button>
                         )}
                         <button
-                          onClick={() => deleteItemReport(item.id)}
+                          onClick={() => {
+                            const confirmed = window.confirm(`Remove "${item.title}" from CampusFind? This permanently deletes the submission and its uploaded photo, along with linked claim and match records. This cannot be undone.`);
+                            if (!confirmed) return;
+                            const reason = window.prompt('Enter the reason for removing this submission (for example: sensitive or inappropriate photo):');
+                            if (reason === null) return;
+                            void deleteItemReport(item.id, reason).catch((error: any) => {
+                              showNotification(error?.message || 'Unable to remove this submission.');
+                            });
+                          }}
                           className="px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50 rounded"
-                          title="Remove inappropriate or duplicate report"
+                          title="Permanently remove this submission and its uploaded photo"
+                          aria-label={`Delete submission: ${item.title}`}
                         >
                           <Trash2 className="w-3.5 h-3.5 inline" />
                         </button>
