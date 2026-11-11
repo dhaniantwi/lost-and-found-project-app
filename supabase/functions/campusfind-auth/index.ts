@@ -121,7 +121,7 @@ Deno.serve(async (req: Request) => {
     const { error: logError } = await admin.from("campusfind_auth_rate_limits").insert({
       email_hash: emailHash,
       ip_hash: ipHash,
-      action,
+      action: action.replaceAll("-", "_"),
     });
     if (logError) throw logError;
 
