@@ -1,5 +1,4 @@
 import React from 'react';
-import heroCampusImage from '../assets/images/ucc_campus_hero_1794334426172.jpg';
 import { useApp } from '../context/AppContext';
 import { PlusCircle, CheckCircle2 } from 'lucide-react';
 
@@ -23,11 +22,15 @@ export const HeroBanner: React.FC<HeroBannerProps> = ({
     <div className="group relative mb-10 overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-950 text-white shadow-[0_28px_70px_rgba(15,23,42,.18)]">
       {/* Background Campus Image with measured contrast scrim */}
       <div className="absolute inset-0 z-0">
-        <img
-          src={heroCampusImage}
-          alt="University of Cape Coast Campus"
-          referrerPolicy="no-referrer"
-          className="h-full w-full object-cover opacity-35 brightness-90 transition duration-[1800ms] group-hover:scale-[1.04]"
+        <video
+          className="h-full w-full object-cover opacity-40 brightness-90 transition duration-[1800ms] group-hover:scale-[1.04]"
+          src="https://videos.pexels.com/video-files/7969427/7969427-uhd_2160_3840_30fps.mp4"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          aria-hidden="true"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/85 to-slate-950/55" /><div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_20%,rgba(251,191,36,.18),transparent_28rem)]" />
       </div>
