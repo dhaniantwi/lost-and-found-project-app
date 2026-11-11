@@ -119,7 +119,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
           <div className="text-[11px] text-slate-400 mt-0.5">Awaiting identity check</div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+        <div className="min-w-0 bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-xs">
           <div className="text-xs text-slate-500 font-medium">Total Registered Items</div>
           <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums mt-1">
             {totalItems}
