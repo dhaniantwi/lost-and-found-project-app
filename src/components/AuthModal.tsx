@@ -223,7 +223,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     <label className={labelClass}>Email verification code
                       <input required type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={8} value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 8))} placeholder="Enter the code from your email" className={`${fieldClass} text-center text-lg font-bold tracking-[.35em]`} />
                     </label>
-                    <button type="button" onClick={() => { setAuthStage('form'); setOtp(''); setError(''); }} className="text-xs font-semibold text-blue-800 transition hover:text-blue-950">← Back to change details or request another code</button>
+                    <button type="button" onClick={() => { setAuthStage('form'); setOtp(''); setError(''); }} className="text-xs font-semibold text-blue-800 transition hover:text-blue-950">← Return to account details</button>
                   </div>
                 )}
 
