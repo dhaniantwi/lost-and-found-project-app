@@ -433,7 +433,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       .single();
     if (reportError) throw reportError;
 
-    // Remove the private image through the Storage API before deleting its database record.
+    // Remove all private files through the Storage API before deleting their database records.
+    const { data: linkedClaims, error: linkedClaimsError } = await supabase
+      .from('claims')
+      .select('proof_document_path')
+      .eq('item_id', itemId);
+    if (linkedClaimsError) throw linkedClaimsError;
+
+    const claimEvidencePaths = (linkedClaims || [])
+      .map((claim: any) => claim.proof_document_path)
+      .filter((path: string | null): path is string =>
+        Boolean(path) && !path!.startsWith('http') && !path!.startsWith('data:') && !path!.startsWith('/')
+      );
+    if (claimEvidencePaths.length > 0) {
+      const { error: evidenceError } = await supabase.storage
+        .from('claim-evidence')
+        .remove(claimEvidencePaths);
+      if (evidenceError) throw new Error(`Linked claim evidence could not be removed: ${evidenceError.message}`);
+    }
+
     if (report.image_path && !report.image_path.startsWith('http') && !report.image_path.startsWith('data:') && !report.image_path.startsWith('/')) {
       const { error: photoError } = await supabase.storage
         .from('item-photos')
