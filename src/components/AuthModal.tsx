@@ -46,7 +46,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setBusy(true);
     try {
       if (authStage === 'otp') {
-        if (!/^\\d{6,8}$/.test(otp.trim())) throw new Error('Enter the verification code from your email.');
+        if (!/^\d{6,8}$/.test(otp.trim())) throw new Error('Enter the verification code from your email.');
         await verifyEmailOtp(email, otp, otpFlow);
         onClose(true);
       } else if (mode === 'signin') {
