@@ -11,9 +11,12 @@
   text-rendering: optimizeLegibility;
 }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; width: 100%; overflow-x: clip; }
+*, *::before, *::after { box-sizing: border-box; }
 body {
   margin: 0;
+  width: 100%;
+  overflow-x: clip;
   min-width: 320px;
   min-height: 100vh;
   font-family: 'DM Sans', 'Manrope', system-ui, -apple-system, sans-serif;
