@@ -4,7 +4,7 @@ import { MatchSuggestion, ItemReport } from '../types';
 import {
   CalendarDays, CheckCircle2, Clock3, MapPin, RefreshCw, Search,
   Sparkles, XCircle, ZoomIn, ShieldCheck, ArrowUpRight, Package,
-  ScanSearch, Palette, Layers3, Timer, Info, ChevronRight
+  ScanSearch, Palette, Layers3, Timer, Info
 } from 'lucide-react';
 
 const confidenceLabel = (score: number) =>
