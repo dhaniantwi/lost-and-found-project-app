@@ -434,7 +434,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (reportError) throw reportError;
 
     // Remove the private image through the Storage API before deleting its database record.
-    if (report.image_path && !/^(https?:|data:|\\/)/.test(report.image_path)) {
+    if (report.image_path && !report.image_path.startsWith('http') && !report.image_path.startsWith('data:') && !report.image_path.startsWith('/')) {
       const { error: photoError } = await supabase.storage
         .from('item-photos')
         .remove([report.image_path]);
