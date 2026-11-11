@@ -45,7 +45,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
       <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 p-5 text-white shadow-xl sm:p-7">
         <video
           className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center opacity-35"
-          src="https://www.pexels.com/download/video/38684065/"
+          src="https://videos.pexels.com/video-files/7969427/7969427-uhd_2160_3840_30fps.mp4"
           autoPlay
           muted
           loop
