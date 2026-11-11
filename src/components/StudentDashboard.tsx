@@ -34,20 +34,53 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
 
   // Filter claims filed by current student
   const myClaims = claims.filter((c) => c.claimantStudentId === currentUser.studentId);
+  const pendingReports = myReports.filter((item) => item.status !== 'recovered').length;
+  const recoveredReports = myReports.filter((item) => item.status === 'recovered').length;
+  const pendingClaims = myClaims.filter((claim) => claim.status === 'pending').length;
+  const unreadNotifications = notifications.filter((notification) => !notification.readAt).length;
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 max-w-full space-y-5 sm:space-y-6">
+      {/* Student dashboard welcome panel */}
+      <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 p-5 text-white shadow-xl sm:p-7">
+        <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-cyan-400/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 left-1/3 h-52 w-52 rounded-full bg-blue-400/15 blur-3xl" />
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[.18em] text-cyan-200"><User className="h-3.5 w-3.5" /> Student workspace</div>
+            <p className="text-xs font-medium text-blue-200">Your CampusFind overview</p>
+            <h2 className="mt-1 break-words text-2xl font-black tracking-tight sm:text-3xl">Welcome back, {currentUser.fullName.split(' ')[0]}.</h2>
+            <p className="mt-2 max-w-xl text-xs leading-relaxed text-slate-300 sm:text-sm">Keep track of your reports, follow claim decisions and stay updated on your campus belongings.</p>
+          </div>
+          <button onClick={onOpenReportModal} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-3 text-xs font-extrabold text-slate-950 shadow-lg shadow-black/20 transition hover:bg-amber-300"><PlusCircle className="h-4 w-4" /> Submit a report</button>
+        </div>
+        <div className="relative mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
+          {[
+            { label: 'My reports', value: myReports.length, note: `${pendingReports} still active`, icon: <Package className="h-4 w-4" /> },
+            { label: 'Recovered', value: recoveredReports, note: 'Items marked recovered', icon: <CheckCircle2 className="h-4 w-4" /> },
+            { label: 'My claims', value: myClaims.length, note: `${pendingClaims} awaiting review`, icon: <FileCheck2 className="h-4 w-4" /> },
+            { label: 'Unread updates', value: unreadNotifications, note: 'Notifications to check', icon: <Bell className="h-4 w-4" /> }
+          ].map((metric) => (
+            <div key={metric.label} className="min-w-0 rounded-2xl border border-white/10 bg-white/[.08] p-3 backdrop-blur-sm sm:p-4">
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-blue-200">{metric.icon}<span>{metric.label}</span></div>
+              <div className="mt-2 text-2xl font-black tabular-nums sm:text-3xl">{metric.value}</div>
+              <p className="mt-1 text-[10px] leading-snug text-slate-300">{metric.note}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Student Profile Card */}
-      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-xl bg-blue-900 text-amber-400 flex items-center justify-center font-bold text-lg shadow-xs">
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <div className="flex min-w-0 items-center gap-3.5">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-950 to-indigo-700 text-lg font-black text-amber-300 shadow-lg shadow-blue-950/20">
             {currentUser.fullName
               .split(' ')
               .map((n) => n[0])
               .join('')}
           </div>
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-lg font-bold text-slate-900">{currentUser.fullName}</h2>
               <span className="text-xs font-mono font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
                 {currentUser.studentId}
@@ -73,12 +106,12 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
       </div>
 
       {/* Sub Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 text-xs font-semibold">
+      <div className="flex max-w-full min-w-0 items-center gap-2 overflow-x-auto overscroll-x-contain rounded-2xl border border-slate-200 bg-white p-2 shadow-sm text-xs font-semibold">
         <button
           onClick={() => setActiveSubTab('reports')}
           className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
             activeSubTab === 'reports'
-              ? 'bg-blue-900 text-white'
+              ? 'bg-blue-950 text-white shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
@@ -90,7 +123,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           onClick={() => setActiveSubTab('claims')}
           className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
             activeSubTab === 'claims'
-              ? 'bg-blue-900 text-white'
+              ? 'bg-blue-950 text-white shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
@@ -102,7 +135,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           onClick={() => setActiveSubTab('notifications')}
           className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 ${
             activeSubTab === 'notifications'
-              ? 'bg-blue-900 text-white'
+              ? 'bg-blue-950 text-white shadow-sm'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
