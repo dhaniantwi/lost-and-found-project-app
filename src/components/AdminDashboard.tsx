@@ -94,15 +94,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
   return (
     <div className="w-full min-w-0 max-w-full overflow-x-clip space-y-4 sm:space-y-6">
       {/* Admin Command Bar */}
-      <div className="bg-slate-900 text-white p-4 sm:p-6 rounded-2xl border border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-amber-400 mb-1">
+      <div className="relative isolate overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 text-white p-5 sm:p-7 rounded-3xl border border-slate-800 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="pointer-events-none absolute -right-16 -top-24 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
+        <div className="relative min-w-0">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[.16em] text-amber-300 mb-3">
             <ShieldCheck className="w-4 h-4" />
             <span>Directorate of University Security · Admin Desk</span>
           </div>
-          <h2 className="text-lg sm:text-xl font-bold text-white break-words">Central Security Operations & Verification Console</h2>
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white break-words">Central Security Operations</h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Logged in as <strong className="text-white">{currentUser.fullName}</strong> ({currentUser.studentId})
+            <span className="text-slate-300">Verification, reporting and campus recovery overview</span><span className="mx-1 text-slate-500">·</span> Signed in as <strong className="text-white">{currentUser.fullName}</strong>
           </p>
         </div>
 
@@ -111,7 +112,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
 
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
-        <div className="min-w-0 bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-xs">
+        <div className="min-w-0 bg-gradient-to-br from-white to-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
           <div className="text-xs text-slate-500 font-medium">Pending Claims Queue</div>
           <div className="text-2xl font-bold text-amber-600 font-mono tabular-nums mt-1">
             {pendingClaims.length}
@@ -119,7 +120,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
           <div className="text-[11px] text-slate-400 mt-0.5">Awaiting identity check</div>
         </div>
 
-        <div className="min-w-0 bg-white p-3 sm:p-4 rounded-xl border border-slate-200 shadow-xs">
+        <div className="min-w-0 bg-gradient-to-br from-white to-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
           <div className="text-xs text-slate-500 font-medium">Total Registered Items</div>
           <div className="text-2xl font-bold text-slate-900 font-mono tabular-nums mt-1">
             {totalItems}
@@ -127,7 +128,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
           <div className="text-[11px] text-slate-400 mt-0.5">Campus lost & found logs</div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+        <div className="bg-gradient-to-br from-white to-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
           <div className="text-xs text-slate-500 font-medium">Campus Recovery Rate</div>
           <div className="text-2xl font-bold text-emerald-600 font-mono tabular-nums mt-1">
             {recoveryRate}%
@@ -135,7 +136,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
           <div className="text-[11px] text-slate-400 mt-0.5">{recoveredCount} items handed back</div>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
+        <div className="bg-gradient-to-br from-white to-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
           <div className="text-xs text-slate-500 font-medium">Registered Students</div>
           <div className="text-2xl font-bold text-blue-900 font-mono tabular-nums mt-1">
             {users.length}
