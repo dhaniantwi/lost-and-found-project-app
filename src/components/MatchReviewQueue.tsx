@@ -191,7 +191,7 @@ export const MatchReviewQueue: React.FC<MatchReviewQueueProps> = () => {
               <div><h4 className="text-xs font-extrabold text-slate-900">Candidate matches</h4><p className="text-[10px] text-slate-400 mt-0.5">Select a pair to inspect</p></div>
               <span className="rounded-full bg-blue-50 text-blue-800 px-2 py-1 text-[10px] font-bold">{visibleSuggestions.length}</span>
             </div>
-            <div className="space-y-2">
+            <div className="flex gap-2 overflow-x-auto pb-2 snap-x snap-mandatory sm:block sm:space-y-2 sm:overflow-visible sm:pb-0">
               {visibleSuggestions.map((suggestion) => {
                 const pairLost = itemById.get(suggestion.lostReportId)!;
                 const pairFound = itemById.get(suggestion.foundReportId)!;
