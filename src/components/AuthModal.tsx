@@ -13,7 +13,7 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
-  const { signIn, signInWithEmailOtp, verifyEmailOtp, signUp, showNotification } = useApp();
+  const { signIn, verifyEmailOtp, signUp, showNotification } = useApp();
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,7 +28,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [authStage, setAuthStage] = useState<'form' | 'otp'>('form');
   const [otp, setOtp] = useState('');
   const [otpFlow, setOtpFlow] = useState<'signup' | 'magiclink'>('magiclink');
-  const [loginMethod, setLoginMethod] = useState<'password' | 'email'>('password');
 
   if (!isOpen) return null;
 
@@ -50,13 +49,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         await verifyEmailOtp(email, otp, otpFlow);
         onClose(true);
       } else if (mode === 'signin') {
-        if (loginMethod === 'email') {
-          await signInWithEmailOtp(email);
-          setOtpFlow('magiclink');
-        } else {
-          await signIn(email, password);
-          setOtpFlow('magiclink');
-        }
+        await signIn(email, password);
+        setOtpFlow('magiclink');
         setOtp('');
         setAuthStage('otp');
       } else {
@@ -177,15 +171,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 {authStage === 'form' ? (
                   <>
-                    {mode === 'signin' && (
-                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-1.5">
-                        <div className="grid grid-cols-2 gap-1">
-                          <button type="button" onClick={() => setLoginMethod('password')} className={`rounded-lg px-2 py-2.5 text-[11px] font-bold transition ${loginMethod === 'password' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>Password + email code</button>
-                          <button type="button" onClick={() => setLoginMethod('email')} className={`rounded-lg px-2 py-2.5 text-[11px] font-bold transition ${loginMethod === 'email' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500'}`}>Email code only</button>
-                        </div>
-                      </div>
-                    )}
-
                     {mode === 'signup' && (
                       <>
                         <div className="mb-1 flex items-center gap-2 text-xs font-bold text-slate-800"><GraduationCap className="h-4 w-4 text-blue-800" /> Student information</div>
@@ -202,7 +187,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     <label className={labelClass}>Email address
                       <input required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@stu.ucc.edu.gh" className={fieldClass} />
                     </label>
-                    {(mode === 'signup' || loginMethod === 'password') && (
+                    {(mode === 'signup' || mode === 'signin') && (
                       <label className={labelClass}>Password
                         <span className="relative mt-1.5 block">
                           <input required type={showPassword ? 'text' : 'password'} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" className={`${fieldClass} pr-12`} />
@@ -230,7 +215,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 {error && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs leading-relaxed text-rose-700">{error}</div>}
 
                 <button disabled={busy} type="submit" className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-900 py-4 text-sm font-bold text-white shadow-lg shadow-blue-950/20 transition duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-950/25 disabled:cursor-wait disabled:opacity-60">
-                  {busy ? 'Please wait…' : authStage === 'otp' ? 'Verify code and continue' : mode === 'signin' ? (loginMethod === 'email' ? 'Send email verification code' : 'Continue to email verification') : 'Create my account'}
+                  {busy ? 'Please wait…' : authStage === 'otp' ? 'Verify code and continue' : mode === 'signin' ? 'Continue to email verification' : 'Create my account'}
                   {!busy && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
                 </button>
               </form>
