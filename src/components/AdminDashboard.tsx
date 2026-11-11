@@ -306,6 +306,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
             />
           </div>
 
+          <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>Administrators can permanently delete a submission and its uploaded photo using the red <strong>Delete</strong> action in each row. A reason is required.</p>
+          </div>
+
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
@@ -362,11 +367,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
                               showNotification(error?.message || 'Unable to remove this submission.');
                             });
                           }}
-                          className="px-2 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50 rounded"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100 hover:border-rose-300 rounded-lg transition-colors"
                           title="Permanently remove this submission and its uploaded photo"
                           aria-label={`Delete submission: ${item.title}`}
                         >
-                          <Trash2 className="w-3.5 h-3.5 inline" />
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete</span>
                         </button>
                       </td>
                     </tr>
