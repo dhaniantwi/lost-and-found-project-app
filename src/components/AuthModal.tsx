@@ -256,10 +256,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
                 {authStage !== 'success' && error && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs leading-relaxed text-rose-700">{error}</div>}
 
-                <button disabled={busy || (authStage === 'otp' && secondsRemaining <= 0) || authStage === 'success'} type="submit" className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-900 py-4 text-sm font-bold text-white shadow-lg shadow-blue-950/20 transition duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-950/25 disabled:cursor-wait disabled:opacity-60">
-                  {busy ? 'Please wait…' : authStage === 'otp' ? (secondsRemaining <= 0 ? 'Code expired' : 'Verify code and continue') : mode === 'signin' ? 'Continue to email verification' : 'Create my account'}
-                  {!busy && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
-                </button>
+                {authStage !== 'success' && (
+                  <button disabled={busy || (authStage === 'otp' && secondsRemaining <= 0)} type="submit" className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-900 py-4 text-sm font-bold text-white shadow-lg shadow-blue-950/20 transition duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-950/25 disabled:cursor-wait disabled:opacity-60">
+                    {busy ? 'Please wait…' : authStage === 'otp' ? (secondsRemaining <= 0 ? 'Code expired' : 'Verify code and continue') : mode === 'signin' ? 'Continue to email verification' : 'Create my account'}
+                    {!busy && <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
+                  </button>
+                )}
               </form>
 
               <div className="mt-6 flex items-center justify-center gap-2 text-[10px] font-medium text-slate-400">
