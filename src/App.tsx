@@ -71,7 +71,7 @@ function CampusFindApp() {
 
       <Header activeTab={activeTab} setActiveTab={setActiveTab} onOpenReportModal={handleOpenReportModal} onOpenAuthModal={() => setAuthModalOpen(true)} />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <main className="flex-1 min-w-0 max-w-7xl w-full mx-auto overflow-x-clip px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         {loading && items.length === 0 && <div className="text-center py-8 text-xs text-slate-500">Connecting securely to CampusFind…</div>}
 
         {activeTab === 'browse' && (
