@@ -102,7 +102,7 @@ function CampusFindApp() {
       <footer className="mt-auto border-t border-slate-200 bg-white py-8 text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 rounded bg-blue-900 text-amber-400 font-bold flex items-center justify-center text-[10px]">UCC</div>
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white p-0.5"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/University_of_Cape_Coast.png" alt="University of Cape Coast coat of arms" className="h-full w-full object-contain" /></span>
             <span className="font-semibold text-slate-700">CampusFind System</span>
             <span aria-hidden="true" className="text-slate-300">·</span>
             <span>University of Cape Coast, Ghana</span>
