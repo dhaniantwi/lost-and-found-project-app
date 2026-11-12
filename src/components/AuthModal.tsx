@@ -118,7 +118,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       <div className="relative z-10 mx-auto grid min-h-screen w-full max-w-[1440px] grid-cols-1 items-center gap-10 px-5 py-20 sm:px-8 lg:grid-cols-[1.08fr_.92fr] lg:gap-16 lg:px-16 lg:py-12">
         <section className="campus-auth-copy mx-auto w-full max-w-2xl text-white">
           <div className="mb-9 inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-xl">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-400 text-[10px] font-black tracking-tight text-slate-950">UCC</span>
+            <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/40 bg-white p-1 shadow-lg">
+              <img src="https://commons.wikimedia.org/wiki/Special:FilePath/University_of_Cape_Coast.png" alt="University of Cape Coast coat of arms" className="h-full w-full object-contain" />
+              <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-slate-900 bg-amber-300 text-slate-950"><Search className="h-3 w-3" /></span>
+            </span>
             <span className="text-[10px] font-bold uppercase tracking-[.22em] text-white/85">University of Cape Coast</span>
             <span className="h-1 w-1 rounded-full bg-amber-300" />
             <span className="text-[10px] font-medium text-white/65">Campus community</span>
