@@ -22,6 +22,7 @@ function CampusFindApp() {
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportModalInitialType, setReportModalInitialType] = useState<ItemType>('lost');
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [guestMode, setGuestMode] = useState(false);
 
   const handleOpenReportModal = (type: ItemType = 'lost') => {
     if (!currentUser) {
@@ -59,6 +60,16 @@ function CampusFindApp() {
       <button onClick={() => setAuthModalOpen(true)} className="px-5 py-2.5 rounded-lg bg-blue-900 text-white text-sm font-semibold hover:bg-blue-800">Sign in / Create account</button>
     </div>
   );
+
+  // New visitors see the sign-in screen first. Choosing guest browsing is explicit.
+  if (!currentUser && !guestMode) {
+    return (
+      <AuthModal
+        isOpen={true}
+        onClose={(authenticated) => setGuestMode(!authenticated)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen w-full min-w-0 overflow-x-clip bg-slate-50 text-slate-900 flex flex-col font-sans selection:bg-blue-900 selection:text-white">
@@ -112,6 +123,7 @@ function CampusFindApp() {
         isOpen={authModalOpen}
         onClose={(authenticated) => {
           setAuthModalOpen(false);
+          if (authenticated) setGuestMode(false);
           if (!authenticated) setPendingClaimItem(null);
         }}
       />
