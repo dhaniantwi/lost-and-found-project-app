@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { UCC_HALLS } from '../data/seedData';
+import { UCC_DEPARTMENTS, UCC_HALLS } from '../data/seedData';
 import {
   X, ShieldCheck, GraduationCap, Eye, EyeOff, ArrowRight,
   Search, PackageCheck, MapPin, Sparkles, LockKeyhole, ArrowLeft
@@ -16,7 +16,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fullName, setFullName] = useState('');
   const [studentId, setStudentId] = useState('');
   const [phone, setPhone] = useState('');
@@ -46,6 +48,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     setMode(next);
     setError('');
     setShowPassword(false);
+    setShowConfirmPassword(false);
+    setConfirmPassword('');
     setAuthStage('form');
     setOtp('');
     setOtpExpiresAt(null);
@@ -69,7 +73,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         setSecondsRemaining(180);
         setAuthStage('otp');
       } else {
-        if (password.length < 8) throw new Error('Use a password with at least 8 characters.');
+        if (password.length < 8) throw new Error('Create a password with at least 8 characters.');
+        if (password !== confirmPassword) throw new Error('The passwords do not match. Please confirm your password.');
+        if (!department) throw new Error('Please select your department.');
         await signUp({ email, password, fullName, studentId, phone, hallOfResidence: hall, department });
         setOtpFlow('signup');
         setOtp('');
@@ -229,7 +235,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                           <label className={labelClass}>Phone number<input value={phone} onChange={e => setPhone(e.target.value)} autoComplete="tel" placeholder="Your contact number" className={fieldClass} /></label>
                           <label className={labelClass}>Hall / residence<select value={hall} onChange={e => setHall(e.target.value)} className={fieldClass}>{UCC_HALLS.map(value => <option key={value}>{value}</option>)}</select></label>
                         </div>
-                        <label className={labelClass}>Department / programme<input required value={department} onChange={e => setDepartment(e.target.value)} placeholder="Your academic programme" className={fieldClass} /></label>
+                        <label className={labelClass}>Department
+                          <select required value={department} onChange={e => setDepartment(e.target.value)} className={fieldClass}>
+                            <option value="">Select your department</option>
+                            {UCC_DEPARTMENTS.map(value => <option key={value} value={value}>{value}</option>)}
+                          </select>
+                        </label>
                       </>
                     )}
 
@@ -237,15 +248,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                       <input required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@stu.ucc.edu.gh" className={fieldClass} />
                     </label>
                     {(mode === 'signup' || mode === 'signin') && (
-                      <label className={labelClass}>Password
+                      <label className={labelClass}>{mode === 'signup' ? 'Create password' : 'Password'}
                         <span className="relative mt-1.5 block">
-                          <input required type={showPassword ? 'text' : 'password'} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" className={`${fieldClass} pr-12`} />
+                          <input required type={showPassword ? 'text' : 'password'} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} value={password} onChange={e => setPassword(e.target.value)} placeholder={mode === 'signup' ? 'Create a new password' : 'Enter your password'} className={`${fieldClass} pr-12`} />
                           <button type="button" onClick={() => setShowPassword(value => !value)} aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword} className="absolute inset-y-0 right-1 flex items-center justify-center rounded-lg px-3 text-slate-400 transition hover:text-blue-900">
                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
                         </span>
-                        {mode === 'signup' && <span className="mt-1.5 block text-[10px] font-medium normal-case tracking-normal text-slate-400">Use at least 8 characters. Your password is secured by Supabase Auth.</span>}
+                        {mode === 'signup' && <span className="mt-1.5 block text-[10px] font-medium normal-case tracking-normal text-slate-400">Create a password with at least 8 characters.</span>}
                       </label>
+                      {mode === 'signup' && (
+                        <label className={labelClass}>Confirm password
+                          <span className="relative mt-1.5 block">
+                            <input required type={showConfirmPassword ? 'text' : 'password'} autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Enter the same password again" className={`${fieldClass} pr-12`} />
+                            <button type="button" onClick={() => setShowConfirmPassword(value => !value)} aria-label={showConfirmPassword ? 'Hide confirmation password' : 'Show confirmation password'} aria-pressed={showConfirmPassword} className="absolute inset-y-0 right-1 flex items-center justify-center rounded-lg px-3 text-slate-400 transition hover:text-blue-900">
+                              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </span>
+                          {confirmPassword && <span className={`mt-1.5 block text-[10px] font-medium normal-case tracking-normal ${password === confirmPassword ? 'text-emerald-600' : 'text-rose-600'}`}>{password === confirmPassword ? 'Passwords match.' : 'Passwords do not match yet.'}</span>}
+                        </label>
+                      )}
                     )}
                   </>
                 ) : (
