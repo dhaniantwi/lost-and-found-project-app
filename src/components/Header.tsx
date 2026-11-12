@@ -28,7 +28,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab, onOpenR
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex w-full min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 py-2 sm:min-h-16 sm:flex-nowrap sm:gap-4 sm:py-0">
           <button onClick={() => setActiveTab('browse')} className="text-left flex min-w-0 flex-1 items-center gap-2 sm:flex-none sm:gap-2.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-950 via-blue-900 to-indigo-800 text-[10px] font-black tracking-tight text-amber-300 shadow-lg shadow-blue-950/20 ring-1 ring-white">UCC</div>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm"><img src="https://commons.wikimedia.org/wiki/Special:FilePath/University_of_Cape_Coast.png" alt="University of Cape Coast coat of arms" className="h-full w-full object-contain" /></span>
             <span className="truncate text-lg font-extrabold tracking-tight text-slate-950 sm:text-xl">CampusFind<span className="text-blue-800">.</span><span className="ml-1 hidden text-[9px] font-bold uppercase tracking-[.18em] text-slate-400 xl:inline">UCC Lost & Found</span></span>
           </button>
 
