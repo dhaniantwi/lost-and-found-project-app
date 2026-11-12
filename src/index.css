@@ -39,7 +39,7 @@ code, pre, .font-mono { font-family: 'JetBrains Mono', monospace; }
 
 /* CampusFind cinematic sign-in experience */
 .campus-auth-overlay { isolation: isolate; }
-.campus-auth-scene { z-index: -1; overflow: hidden; background: #07152c; }
+.campus-auth-scene { z-index: 0; overflow: hidden; background: #07152c; }
 .campus-auth-backdrop {
   position: absolute;
   inset: -4%;
