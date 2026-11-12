@@ -248,6 +248,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                       <input required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@stu.ucc.edu.gh" className={fieldClass} />
                     </label>
                     {(mode === 'signup' || mode === 'signin') && (
+                      <>
                       <label className={labelClass}>{mode === 'signup' ? 'Create password' : 'Password'}
                         <span className="relative mt-1.5 block">
                           <input required type={showPassword ? 'text' : 'password'} autoComplete={mode === 'signin' ? 'current-password' : 'new-password'} value={password} onChange={e => setPassword(e.target.value)} placeholder={mode === 'signup' ? 'Create a new password' : 'Enter your password'} className={`${fieldClass} pr-12`} />
@@ -268,6 +269,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                           {confirmPassword && <span className={`mt-1.5 block text-[10px] font-medium normal-case tracking-normal ${password === confirmPassword ? 'text-emerald-600' : 'text-rose-600'}`}>{password === confirmPassword ? 'Passwords match.' : 'Passwords do not match yet.'}</span>}
                         </label>
                       )}
+                      </>
                     )}
                   </>
                 ) : (
