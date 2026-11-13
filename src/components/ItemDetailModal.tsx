@@ -103,7 +103,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
               </div>
               <p className="text-sm font-semibold text-slate-800">{item.title}</p>
               <p className="text-xs text-slate-500 mt-1">
-                {currentUser ? 'No photo was uploaded with this report.' : 'Photo previews are restricted for privacy. Use the public description and general campus location to identify the item.'}
+                {'No photo was uploaded with this report.'}
               </p>
             </div>
           )}
