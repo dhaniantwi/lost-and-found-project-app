@@ -73,6 +73,14 @@ const signedUrl = async (bucket: string, path?: string | null) => {
   return data.signedUrl;
 };
 
+// Item photos are intentionally public so visitors can identify reports before signing in.
+// Keep claim evidence in its separate private bucket and continue using signedUrl for it.
+const publicItemPhotoUrl = (path?: string | null) => {
+  if (!path) return undefined;
+  if (/^(https?:|data:|\/)/.test(path)) return path;
+  return supabase.storage.from('item-photos').getPublicUrl(path).data.publicUrl;
+};
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [authUser, setAuthUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
@@ -179,9 +187,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           color: row.color,
           distinctMarks: privateDetails?.distinct_marks || undefined,
           storageLocation: privateDetails?.storage_location || undefined,
-          imageUrl: authUser
-            ? await signedUrl('item-photos', row.image_path)
-            : undefined,
+          imageUrl: publicItemPhotoUrl(row.image_path),
           reporterName: owner?.fullName || (ownRecord ? profile?.fullName : 'UCC student'),
           reporterStudentId: owner?.studentId || (ownRecord ? profile?.studentId : ''),
           reporterEmail: owner?.email || (ownRecord ? authUser?.email || '' : ''),
