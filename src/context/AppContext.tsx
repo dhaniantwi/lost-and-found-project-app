@@ -179,7 +179,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           color: row.color,
           distinctMarks: privateDetails?.distinct_marks || undefined,
           storageLocation: privateDetails?.storage_location || undefined,
-          imageUrl: authUser && (ownRecord || profile?.role === 'admin')
+          imageUrl: authUser
             ? await signedUrl('item-photos', row.image_path)
             : undefined,
           reporterName: owner?.fullName || (ownRecord ? profile?.fullName : 'UCC student'),
