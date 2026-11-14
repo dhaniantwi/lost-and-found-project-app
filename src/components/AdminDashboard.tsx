@@ -35,7 +35,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
     showNotification
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'claims' | 'reports' | 'users' | 'logs' | 'matches'>('matches');
+  const [activeTab, setActiveTab] = useState<'claims' | 'reports' | 'users' | 'logs' | 'matches'>('claims');
   const [selectedClaimForReview, setSelectedClaimForReview] = useState<Claim | null>(null);
   const [reviewDecision, setReviewDecision] = useState<'approved' | 'rejected' | 'collected'>('approved');
 
@@ -49,6 +49,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
   // Metrics
   const totalItems = items.length;
   const pendingClaims = claims.filter((c) => c.status === 'pending');
+  const orderedClaims = [...claims].sort((a, b) => {
+    if (a.status === 'pending' && b.status !== 'pending') return -1;
+    if (a.status !== 'pending' && b.status === 'pending') return 1;
+    return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
+  });
   const recoveredCount = items.filter((i) => i.status === 'recovered').length;
   const recoveryRate = totalItems > 0 ? Math.round((recoveredCount / totalItems) * 100) : 0;
 
@@ -240,7 +245,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {claims.map((claim) => (
+                    {orderedClaims.map((claim) => (
                       <tr key={claim.id} className="hover:bg-slate-50/70 transition-colors">
                         <td className="py-3 px-4 font-mono font-bold text-slate-900 whitespace-nowrap">
                           {claim.id}
