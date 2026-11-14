@@ -308,7 +308,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
 
           <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-            <p>Administrators can permanently delete a submission and its uploaded photo using the red <strong>Delete</strong> action in each row. A reason is required.</p>
+            <p>Administrators can permanently delete a submission and its uploaded photo using the red <strong>Delete</strong> action in each row. You will be asked to confirm before the submission is permanently deleted.</p>
           </div>
 
           <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
@@ -359,11 +359,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
                         )}
                         <button
                           onClick={() => {
-                            const confirmed = window.confirm(`Remove "${item.title}" from CampusFind? This permanently deletes the submission and its uploaded photo, along with linked claim and match records. This cannot be undone.`);
+                            const confirmed = window.confirm('Are you sure you want to delete this response? This action cannot be undone.');
                             if (!confirmed) return;
-                            const reason = window.prompt('Enter the reason for removing this submission (for example: sensitive or inappropriate photo):');
-                            if (reason === null) return;
-                            void deleteItemReport(item.id, reason).catch((error: any) => {
+                            void deleteItemReport(item.id).catch((error: any) => {
                               showNotification(error?.message || 'Unable to remove this submission.');
                             });
                           }}
