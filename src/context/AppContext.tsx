@@ -21,6 +21,7 @@ interface AppContextType {
   addItemReport: (report: Omit<ItemReport, 'id' | 'dateReported' | 'status' | 'claimsCount'> & { mediaFiles?: File[] }) => Promise<ItemReport>;
   updateItemStatus: (itemId: string, status: ItemStatus) => Promise<void>;
   deleteItemReport: (itemId: string) => Promise<void>;
+  deleteClaim: (claimId: string) => Promise<void>;
   submitClaim: (claimData: { itemId: string; itemTitle: string; itemCategory: any; itemCampusLocation: string; proofDescription: string; proofDocumentFile?: File }) => Promise<Claim>;
   reviewClaim: (
     claimId: string,
@@ -214,6 +215,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const item = itemById.get(row.item_id);
           return {
             id: row.id,
+            claimantId: row.claimant_id,
             itemId: row.item_id,
             itemTitle: item?.title || 'Campus item',
             itemCategory: item?.category || 'Other',
@@ -522,6 +524,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification('Submission and its uploaded media have been removed.');
   };
 
+  const deleteClaim = async (claimId: string) => {
+    if (!authUser) throw new Error('Please sign in before deleting a claim.');
+    const claim = claims.find((entry) => entry.id === claimId && entry.claimantId === authUser.id);
+    if (!claim) throw new Error('You can only delete your own claim.');
+    if (claim.status !== 'pending') throw new Error('Only claims that are still pending can be withdrawn. Please contact the Security Desk about a claim already reviewed.');
+
+    const { data: row, error: lookupError } = await supabase
+      .from('claims')
+      .select('id, proof_document_path')
+      .eq('id', claimId)
+      .eq('claimant_id', authUser.id)
+      .eq('status', 'pending')
+      .single();
+    if (lookupError) throw lookupError;
+
+    const { error: deleteError } = await supabase
+      .from('claims')
+      .delete()
+      .eq('id', claimId)
+      .eq('claimant_id', authUser.id)
+      .eq('status', 'pending');
+    if (deleteError) throw deleteError;
+
+    if (row.proof_document_path) {
+      const { error: evidenceError } = await supabase.storage
+        .from('claim-evidence')
+        .remove([row.proof_document_path]);
+      if (evidenceError) console.error('Claim was withdrawn, but its evidence file could not be removed:', evidenceError);
+    }
+
+    await refreshData();
+    showNotification('Your pending claim has been withdrawn.');
+  };
+
   const submitClaim = async (claimData: { itemId: string; itemTitle: string; itemCategory: any; itemCampusLocation: string; proofDescription: string; proofDocumentFile?: File }) => {
     if (!authUser) throw new Error('Please sign in before submitting a claim.');
 
@@ -646,7 +682,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider value={{
       items, claims, users, currentUser, authUser, auditLogs, matchSuggestions, notifications, loading,
       signIn, verifyEmailOtp, signUp, signOut, refreshData, addItemReport, updateItemStatus,
-      deleteItemReport, submitClaim, reviewClaim, markItemRecovered, reviewMatchSuggestion, markNotificationRead,
+      deleteItemReport, submitClaim, deleteClaim, reviewClaim, markItemRecovered, reviewMatchSuggestion, markNotificationRead,
       notification, showNotification
     }}>
       {children}
