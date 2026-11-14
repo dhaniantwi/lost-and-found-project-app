@@ -18,7 +18,7 @@ interface AppContextType {
   signUp: (details: { email: string; password: string; fullName: string; studentId: string; phone: string; hallOfResidence: string; department: string }) => Promise<void>;
   signOut: () => Promise<void>;
   refreshData: () => Promise<void>;
-  addItemReport: (report: Omit<ItemReport, 'id' | 'dateReported' | 'status' | 'claimsCount'>) => Promise<ItemReport>;
+  addItemReport: (report: Omit<ItemReport, 'id' | 'dateReported' | 'status' | 'claimsCount'> & { mediaFiles?: File[] }) => Promise<ItemReport>;
   updateItemStatus: (itemId: string, status: ItemStatus) => Promise<void>;
   deleteItemReport: (itemId: string) => Promise<void>;
   submitClaim: (claimData: { itemId: string; itemTitle: string; itemCategory: any; itemCampusLocation: string; proofDescription: string; proofDocumentUrl?: string }) => Promise<Claim>;
@@ -154,7 +154,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       const { data: reportRows, error: reportsError } = authUser
         ? await supabase.from('item_reports')
-            .select('id, reporter_id, type, title, category, description, campus_location, date_event, color, image_path, status, reward_offered, claims_count, resolution_date, created_at')
+            .select('id, reporter_id, type, title, category, description, campus_location, date_event, color, image_path, media_path_2, media_type, media_type_2, status, reward_offered, claims_count, resolution_date, created_at')
             .order('created_at', { ascending: false })
         : await supabase.from('item_catalog')
             .select('*')
@@ -187,7 +187,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           color: row.color,
           distinctMarks: privateDetails?.distinct_marks || undefined,
           storageLocation: privateDetails?.storage_location || undefined,
-          imageUrl: publicItemPhotoUrl(row.image_path),
+          imageUrl: row.media_type === 'video' ? undefined : publicItemPhotoUrl(row.image_path),
+          mediaItems: [
+            ...(row.image_path ? [{ url: publicItemPhotoUrl(row.image_path)!, type: row.media_type === 'video' ? 'video' as const : 'image' as const }] : []),
+            ...(row.media_path_2 ? [{ url: publicItemPhotoUrl(row.media_path_2)!, type: row.media_type_2 === 'video' ? 'video' as const : 'image' as const }] : [])
+          ],
           reporterName: owner?.fullName || (ownRecord ? profile?.fullName : 'UCC student'),
           reporterStudentId: owner?.studentId || (ownRecord ? profile?.studentId : ''),
           reporterEmail: owner?.email || (ownRecord ? authUser?.email || '' : ''),
@@ -378,22 +382,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification('You have signed out.');
   };
 
-  const addItemReport = async (report: Omit<ItemReport, 'id' | 'dateReported' | 'status' | 'claimsCount'>) => {
+  const addItemReport = async (report: Omit<ItemReport, 'id' | 'dateReported' | 'status' | 'claimsCount'> & { mediaFiles?: File[] }) => {
     if (!authUser || !currentUser) throw new Error('Please sign in before reporting an item.');
-    const imagePath = await uploadDataUrl('item-photos', authUser.id, report.imageUrl);
-    const { data, error } = await supabase.from('item_reports').insert({
-      reporter_id: authUser.id,
-      type: report.type,
-      title: report.title,
-      category: report.category,
-      description: report.description,
-      campus_location: report.campusLocation,
-      date_event: report.dateEvent,
-      color: report.color,
-      image_path: imagePath,
-      reward_offered: report.rewardOffered || null
-    }).select('*').single();
-    if (error) throw error;
+    const mediaFiles = (report.mediaFiles || []).slice(0, 2);
+    const uploadedPaths: string[] = [];
+    let data: any;
+
+    try {
+      for (const file of mediaFiles) {
+        const extension = file.name.split('.').pop()?.toLowerCase() || (file.type === 'video/mp4' ? 'mp4' : 'jpg');
+        const path = `${authUser.id}/${crypto.randomUUID()}.${extension}`;
+        const { error: uploadError } = await supabase.storage.from('item-photos').upload(path, file, {
+          contentType: file.type,
+          upsert: false
+        });
+        if (uploadError) throw uploadError;
+        uploadedPaths.push(path);
+      }
+
+      const legacyImagePath = mediaFiles.length === 0
+        ? await uploadDataUrl('item-photos', authUser.id, report.imageUrl)
+        : null;
+      const firstType = mediaFiles[0]?.type.startsWith('video/') ? 'video' : 'image';
+      const secondType = mediaFiles[1]?.type.startsWith('video/') ? 'video' : 'image';
+      const { data: inserted, error } = await supabase.from('item_reports').insert({
+        reporter_id: authUser.id,
+        type: report.type,
+        title: report.title,
+        category: report.category,
+        description: report.description,
+        campus_location: report.campusLocation,
+        date_event: report.dateEvent,
+        color: report.color,
+        image_path: uploadedPaths[0] || legacyImagePath,
+        media_path_2: uploadedPaths[1] || null,
+        media_type: firstType,
+        media_type_2: uploadedPaths[1] ? secondType : null,
+        reward_offered: report.rewardOffered || null
+      }).select('*').single();
+      if (error) throw error;
+      data = inserted;
+    } catch (error) {
+      if (uploadedPaths.length) {
+        await supabase.storage.from('item-photos').remove(uploadedPaths);
+      }
+      throw error;
+    }
     if (report.distinctMarks || report.specificSpot || report.storageLocation) {
       const { error: privateError } = await supabase.from('report_private_details').insert({
         item_id: data.id,
@@ -433,7 +467,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const { data: report, error: reportError } = await supabase
       .from('item_reports')
-      .select('id, title, image_path')
+      .select('id, title, image_path, media_path_2')
       .eq('id', itemId)
       .single();
     if (reportError) throw reportError;
@@ -457,11 +491,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (evidenceError) throw new Error(`Linked claim evidence could not be removed: ${evidenceError.message}`);
     }
 
-    if (report.image_path && !report.image_path.startsWith('http') && !report.image_path.startsWith('data:') && !report.image_path.startsWith('/')) {
-      const { error: photoError } = await supabase.storage
+    const itemMediaPaths = [report.image_path, report.media_path_2]
+      .filter((path: string | null): path is string =>
+        Boolean(path) && !path!.startsWith('http') && !path!.startsWith('data:') && !path!.startsWith('/')
+      );
+    if (itemMediaPaths.length > 0) {
+      const { error: mediaError } = await supabase.storage
         .from('item-photos')
-        .remove([report.image_path]);
-      if (photoError) throw new Error(`The submission photo could not be removed: ${photoError.message}`);
+        .remove(itemMediaPaths);
+      if (mediaError) throw new Error(`The submission media could not be removed: ${mediaError.message}`);
     }
 
     const { error: deleteError } = await supabase
@@ -481,7 +519,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     await refreshData();
-    showNotification('Submission and its uploaded photo have been removed.');
+    showNotification('Submission and its uploaded media have been removed.');
   };
 
   const submitClaim = async (claimData: { itemId: string; itemTitle: string; itemCategory: any; itemCampusLocation: string; proofDescription: string; proofDocumentUrl?: string }) => {
