@@ -14,6 +14,11 @@ export type ItemCategory =
   | 'Clothing & Accessories'
   | 'Other';
 
+export interface ItemMedia {
+  url: string;
+  type: 'image' | 'video';
+}
+
 export interface ItemReport {
   id: string;
   type: ItemType;
@@ -28,6 +33,7 @@ export interface ItemReport {
   distinctMarks?: string; // Private or distinctive notes
   storageLocation?: string; // For found items: e.g. Central Security Post, Porters Lodge
   imageUrl?: string;
+  mediaItems?: ItemMedia[];
   reporterName: string;
   reporterStudentId: string;
   reporterEmail: string;
