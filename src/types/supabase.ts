@@ -336,6 +336,10 @@ export type Database = {
           date_event?: string | null
           description?: string | null
           id?: string | null
+          image_path?: string | null
+          media_path_2?: string | null
+          media_type?: string | null
+          media_type_2?: string | null
           resolution_date?: string | null
           reward_offered?: string | null
           specific_spot?: string | null
