@@ -83,13 +83,13 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
         <div className="p-6 space-y-6">
           {/* Main Visual */}
           {item.imageUrl && !imageError ? (
-            <div className="rounded-xl overflow-hidden aspect-16/9 bg-slate-100 border border-slate-200">
+            <div className="w-full h-[min(55vh,520px)] rounded-xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center">
               <img
                 src={item.imageUrl}
                 alt={item.title}
                 referrerPolicy="no-referrer"
                 onError={() => setImageError(true)}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             </div>
           ) : (
