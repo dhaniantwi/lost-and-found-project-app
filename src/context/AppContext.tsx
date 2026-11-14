@@ -21,7 +21,7 @@ interface AppContextType {
   addItemReport: (report: Omit<ItemReport, 'id' | 'dateReported' | 'status' | 'claimsCount'> & { mediaFiles?: File[] }) => Promise<ItemReport>;
   updateItemStatus: (itemId: string, status: ItemStatus) => Promise<void>;
   deleteItemReport: (itemId: string) => Promise<void>;
-  submitClaim: (claimData: { itemId: string; itemTitle: string; itemCategory: any; itemCampusLocation: string; proofDescription: string; proofDocumentUrl?: string }) => Promise<Claim>;
+  submitClaim: (claimData: { itemId: string; itemTitle: string; itemCategory: any; itemCampusLocation: string; proofDescription: string; proofDocumentFile?: File }) => Promise<Claim>;
   reviewClaim: (
     claimId: string,
     status: ClaimStatus,
@@ -522,16 +522,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification('Submission and its uploaded media have been removed.');
   };
 
-  const submitClaim = async (claimData: { itemId: string; itemTitle: string; itemCategory: any; itemCampusLocation: string; proofDescription: string; proofDocumentUrl?: string }) => {
+  const submitClaim = async (claimData: { itemId: string; itemTitle: string; itemCategory: any; itemCampusLocation: string; proofDescription: string; proofDocumentFile?: File }) => {
     if (!authUser) throw new Error('Please sign in before submitting a claim.');
-    const evidencePath = await uploadDataUrl('claim-evidence', authUser.id, claimData.proofDocumentUrl);
+
+    let evidencePath: string | null = null;
+    if (claimData.proofDocumentFile) {
+      const file = claimData.proofDocumentFile;
+      const extension = file.name.split('.').pop()?.toLowerCase() || 'bin';
+      evidencePath = `${authUser.id}/${crypto.randomUUID()}.${extension}`;
+      const { error: uploadError } = await supabase.storage.from('claim-evidence').upload(evidencePath, file, {
+        contentType: file.type,
+        upsert: false
+      });
+      if (uploadError) throw uploadError;
+    }
+
     const { data, error } = await supabase.from('claims').insert({
       item_id: claimData.itemId,
       claimant_id: authUser.id,
       proof_description: claimData.proofDescription,
       proof_document_path: evidencePath
     }).select('*').single();
-    if (error) throw error;
+
+    if (error) {
+      if (evidencePath) await supabase.storage.from('claim-evidence').remove([evidencePath]);
+      throw error;
+    }
+
     await refreshData();
     showNotification('Your ownership claim has been submitted for review.');
     return {
@@ -546,7 +563,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       claimantPhone: currentUser?.phone || '',
       claimantHall: currentUser?.hallOfResidence || '',
       proofDescription: data.proof_description,
-      proofDocumentUrl: undefined,
+      proofDocumentUrl: await signedUrl('claim-evidence', evidencePath),
       status: data.status,
       submittedAt: data.submitted_at
     } as Claim;
