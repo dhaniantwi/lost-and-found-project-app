@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ItemReport } from '../types';
-import { MapPin, Calendar, CheckCircle2, AlertCircle, ArrowUpRight, HelpCircle } from 'lucide-react';
+import { MapPin, Calendar, CheckCircle2, AlertCircle, ArrowUpRight, HelpCircle, Video } from 'lucide-react';
 
 interface ItemCardProps {
   item: ItemReport;
@@ -11,6 +11,7 @@ interface ItemCardProps {
 export const ItemCard: React.FC<ItemCardProps> = ({ item, onSelect, onClaim }) => {
   const [imageError, setImageError] = useState(false);
 
+  const firstMedia = item.mediaItems?.[0] || (item.imageUrl ? { url: item.imageUrl, type: 'image' as const } : undefined);
   const isLost = item.type === 'lost';
   const isRecovered = item.status === 'recovered';
 
@@ -21,14 +22,30 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onSelect, onClaim }) =
     >
       {/* Visual Asset or Styled Fallback */}
       <div className="relative aspect-[4/3] sm:aspect-16/10 bg-slate-100 overflow-hidden flex items-center justify-center">
-        {item.imageUrl && !imageError ? (
-          <img
-            src={item.imageUrl}
-            alt={item.title}
-            referrerPolicy="no-referrer"
-            onError={() => setImageError(true)}
-            className="w-full h-full object-contain"
-          />
+        {firstMedia && !imageError ? (
+          firstMedia.type === 'video' ? (
+            <>
+              <video
+                src={firstMedia.url}
+                muted
+                playsInline
+                preload="metadata"
+                onError={() => setImageError(true)}
+                className="w-full h-full object-contain"
+              />
+              <span className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-full bg-slate-950/80 px-2.5 py-1 text-[10px] font-semibold text-white">
+                <Video className="h-3 w-3" /> Video
+              </span>
+            </>
+          ) : (
+            <img
+              src={firstMedia.url}
+              alt={item.title}
+              referrerPolicy="no-referrer"
+              onError={() => setImageError(true)}
+              className="w-full h-full object-contain"
+            />
+          )
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 p-4 text-center">
             <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-2 ${
