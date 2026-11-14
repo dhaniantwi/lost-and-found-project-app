@@ -48,6 +48,7 @@ export interface ItemReport {
 
 export interface Claim {
   id: string;
+  claimantId: string;
   itemId: string;
   itemTitle: string;
   itemCategory: ItemCategory;
