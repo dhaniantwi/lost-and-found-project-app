@@ -20,14 +20,14 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onSelect, onClaim }) =
       className="group bg-white rounded-xl border border-slate-200 overflow-hidden hover:border-slate-300 hover:shadow-sm transition-all flex flex-col cursor-pointer"
     >
       {/* Visual Asset or Styled Fallback */}
-      <div className="relative aspect-16/10 bg-slate-100 overflow-hidden">
+      <div className="relative aspect-[4/3] sm:aspect-16/10 bg-slate-100 overflow-hidden flex items-center justify-center">
         {item.imageUrl && !imageError ? (
           <img
             src={item.imageUrl}
             alt={item.title}
             referrerPolicy="no-referrer"
             onError={() => setImageError(true)}
-            className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
+            className="w-full h-full object-contain"
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 p-4 text-center">
