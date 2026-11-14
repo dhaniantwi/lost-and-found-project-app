@@ -226,6 +226,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
       {/* Tab 1: Claims Verification Queue */}
       {activeTab === 'claims' && (
         <div className="space-y-4">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Claims Review &amp; Approval Desk</h3>
+                <p className="mt-1 text-xs text-slate-600">Open a submitted claim to inspect the student’s proof and evidence, then approve or reject the request.</p>
+              </div>
+              <div className="shrink-0 rounded-xl bg-white border border-amber-200 px-4 py-2">
+                <div className="text-[10px] uppercase tracking-wider font-semibold text-slate-500">Awaiting review</div>
+                <div className="text-xl font-black tabular-nums text-amber-700">{pendingClaims.length}</div>
+              </div>
+            </div>
+          </div>
           {claims.length === 0 ? (
             <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-xs text-slate-500">
               No claims submitted yet in the system.
