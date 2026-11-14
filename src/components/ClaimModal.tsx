@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ItemReport } from '../types';
 import { useApp } from '../context/AppContext';
-import { X, ShieldAlert, CheckCircle2, FileText, Upload } from 'lucide-react';
+import { X, ShieldAlert, CheckCircle2, FileText, Upload, Film, Image as ImageIcon } from 'lucide-react';
 
 interface ClaimModalProps {
   item: ItemReport | null;
@@ -13,24 +13,41 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({ item, isOpen, onClose })
   const { currentUser, submitClaim } = useApp();
 
   const [proofDescription, setProofDescription] = useState('');
-  const [proofDocumentUrl, setProofDocumentUrl] = useState('');
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [proofPreviewUrl, setProofPreviewUrl] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!proofFile) {
+      setProofPreviewUrl('');
+      return;
+    }
+    const previewUrl = URL.createObjectURL(proofFile);
+    setProofPreviewUrl(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [proofFile]);
 
   if (!isOpen || !item || !currentUser) return null;
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(file.type) || file.size > 5 * 1024 * 1024) {
-      setError('Choose a JPG, PNG, WebP, or PDF file no larger than 5MB.');
+
+    const isImage = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
+    const isVideo = ['video/mp4', 'video/webm', 'video/quicktime'].includes(file.type);
+    const isPdf = file.type === 'application/pdf';
+    const maxSize = isVideo ? 20 * 1024 * 1024 : 5 * 1024 * 1024;
+
+    if ((!isImage && !isVideo && !isPdf) || file.size > maxSize) {
+      setError('Choose a JPG, PNG, WebP, PDF (max 5MB), or MP4, WebM, MOV video (max 20MB).');
+      e.target.value = '';
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') setProofDocumentUrl(reader.result);
-    };
-    reader.readAsDataURL(file);
+
+    setProofFile(file);
+    setError('');
+    e.target.value = '';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,7 +67,7 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({ item, isOpen, onClose })
         itemCategory: item.category,
         itemCampusLocation: item.campusLocation,
         proofDescription: proofDescription.trim(),
-        proofDocumentUrl: proofDocumentUrl || undefined
+        proofDocumentFile: proofFile || undefined
       });
       onClose();
     } catch (err: any) {
@@ -129,23 +146,51 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({ item, isOpen, onClose })
             </p>
           </div>
 
-          {/* Optional Proof Document / Receipt */}
+          {/* Optional Proof Attachment */}
           <div>
             <label className="block text-xs font-semibold text-slate-800 mb-1">
-              Supporting Proof Attachment (Optional · Max 5MB)
+              Supporting Proof Attachment (Optional)
             </label>
             <label className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-xl cursor-pointer transition-colors text-xs text-slate-600">
               <Upload className="w-4 h-4 text-slate-400 shrink-0" />
-              <span className="truncate">
-                {proofDocumentUrl ? 'Supporting image attached ✓' : 'Upload a receipt or non-sensitive supporting proof'}
+              <span className="min-w-0 flex-1">
+                <span className="block font-medium text-slate-700 truncate">
+                  {proofFile ? proofFile.name : 'Upload a photo, video, or receipt'}
+                </span>
+                <span className="block text-[10px] text-slate-400 mt-0.5">
+                  Images/PDF up to 5MB · MP4, WebM, MOV videos up to 20MB
+                </span>
               </span>
               <input
                 type="file"
-                accept="image/jpeg,image/png,image/webp,application/pdf"
+                accept="image/jpeg,image/png,image/webp,application/pdf,video/mp4,video/webm,video/quicktime"
                 onChange={handleFileUpload}
                 className="hidden"
               />
             </label>
+
+            {proofFile && (
+              <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2 text-xs font-medium text-slate-700 min-w-0">
+                    {proofFile.type.startsWith('video/') ? <Film className="w-4 h-4 shrink-0" /> : proofFile.type.startsWith('image/') ? <ImageIcon className="w-4 h-4 shrink-0" /> : <FileText className="w-4 h-4 shrink-0" />}
+                    <span className="truncate">{proofFile.name}</span>
+                  </div>
+                  <button type="button" onClick={() => setProofFile(null)} className="text-xs font-semibold text-rose-600 hover:text-rose-700">
+                    Remove
+                  </button>
+                </div>
+                {proofFile.type.startsWith('video/') && proofPreviewUrl && (
+                  <video src={proofPreviewUrl} controls playsInline className="w-full max-h-56 rounded-lg bg-black" />
+                )}
+                {proofFile.type.startsWith('image/') && proofPreviewUrl && (
+                  <img src={proofPreviewUrl} alt="Claim evidence preview" className="w-full max-h-56 rounded-lg object-contain bg-white" />
+                )}
+                {proofFile.type === 'application/pdf' && (
+                  <p className="text-[11px] text-slate-500">PDF document selected and ready to upload.</p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Honor Code Checkbox */}
