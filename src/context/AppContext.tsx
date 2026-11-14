@@ -20,7 +20,7 @@ interface AppContextType {
   refreshData: () => Promise<void>;
   addItemReport: (report: Omit<ItemReport, 'id' | 'dateReported' | 'status' | 'claimsCount'>) => Promise<ItemReport>;
   updateItemStatus: (itemId: string, status: ItemStatus) => Promise<void>;
-  deleteItemReport: (itemId: string, reason: string) => Promise<void>;
+  deleteItemReport: (itemId: string) => Promise<void>;
   submitClaim: (claimData: { itemId: string; itemTitle: string; itemCategory: any; itemCampusLocation: string; proofDescription: string; proofDocumentUrl?: string }) => Promise<Claim>;
   reviewClaim: (
     claimId: string,
@@ -426,11 +426,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showNotification(`Item report status updated to ${status}.`);
   };
 
-  const deleteItemReport = async (itemId: string, reason: string) => {
+  const deleteItemReport = async (itemId: string) => {
     if (!authUser || currentUser?.role !== 'admin') {
       throw new Error('Only an administrator can remove a CampusFind submission.');
     }
-    if (!reason.trim()) throw new Error('Please provide a reason for removing this submission.');
 
     const { data: report, error: reportError } = await supabase
       .from('item_reports')
@@ -475,7 +474,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       actor_id: authUser.id,
       action: 'REPORT_DELETED',
       target_id: itemId,
-      details: `Administrator removed submission "${report.title}". Reason: ${reason.trim()}`
+      details: `Administrator deleted submission "${report.title}" after confirmation.`
     });
     if (auditError) {
       console.error('Submission was removed, but its audit entry could not be saved:', auditError);
