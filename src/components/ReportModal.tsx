@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ItemCategory, ItemReport, ItemType } from '../types';
 import { useApp } from '../context/AppContext';
 import { ITEM_CATEGORIES, UCC_LOCATIONS } from '../data/seedData';
-import { X, Upload, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, Upload, AlertCircle, CheckCircle2, Image as ImageIcon, Video } from 'lucide-react';
 
 interface ReportModalProps {
   initialType?: ItemType;
@@ -29,23 +29,48 @@ export const ReportModal: React.FC<ReportModalProps> = ({
   const [distinctMarks, setDistinctMarks] = useState('');
   const [storageLocation, setStorageLocation] = useState('Central Security Post (North Gate)');
   const [rewardOffered, setRewardOffered] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
+
+  useEffect(() => {
+    const urls = mediaFiles.map((file) => URL.createObjectURL(file));
+    setMediaPreviews(urls);
+    return () => urls.forEach((url) => URL.revokeObjectURL(url));
+  }, [mediaFiles]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   if (!isOpen || !currentUser) return null;
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) {
-        setErrors((current) => ({ ...current, image: 'Choose a JPG, PNG, or WebP image no larger than 5MB.' }));
-        return;
+    const selected = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (!selected.length) return;
+
+    const nextFiles = [...mediaFiles];
+    let uploadError = '';
+    for (const file of selected) {
+      if (nextFiles.length >= 2) {
+        uploadError = 'You can upload a maximum of two files per report.';
+        break;
       }
-      setErrors((current) => ({ ...current, image: '' }));
-      const reader = new FileReader();
-      reader.onload = () => { if (typeof reader.result === 'string') setImageUrl(reader.result); };
-      reader.readAsDataURL(file);
+      const isImage = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
+      const isVideo = ['video/mp4', 'video/webm', 'video/quicktime'].includes(file.type);
+      if (!isImage && !isVideo) {
+        uploadError = 'Choose JPG, PNG, WebP, MP4, WebM, or MOV files.';
+        continue;
+      }
+      if (isImage && file.size > 5 * 1024 * 1024) {
+        uploadError = 'Each photo must be no larger than 5MB.';
+        continue;
+      }
+      if (isVideo && file.size > 20 * 1024 * 1024) {
+        uploadError = 'Each video must be no larger than 20MB.';
+        continue;
+      }
+      nextFiles.push(file);
     }
+    setMediaFiles(nextFiles);
+    setErrors((current) => ({ ...current, media: uploadError }));
   };
 
   const validate = () => {
@@ -76,13 +101,14 @@ export const ReportModal: React.FC<ReportModalProps> = ({
       distinctMarks: distinctMarks.trim() || undefined,
       storageLocation: type === 'found' ? storageLocation.trim() : undefined,
       rewardOffered: type === 'lost' && rewardOffered.trim() ? rewardOffered.trim() : undefined,
-      imageUrl: imageUrl || undefined,
+      mediaFiles,
       reporterName: currentUser.fullName,
       reporterStudentId: currentUser.studentId,
       reporterEmail: currentUser.email,
       reporterPhone: currentUser.phone,
       reporterHall: currentUser.hallOfResidence
       });
+      setMediaFiles([]);
       onClose();
     } catch (error: any) {
       setErrors((current) => ({ ...current, submit: error?.message || 'Unable to publish this report.' }));
@@ -298,51 +324,81 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             </p>
           </div>
 
-          {/* Photo Upload & Presets */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Item Photograph (Optional but Recommended)
-            </label>
-            <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2.5 mb-3">Do not upload student ID cards, bank cards, passports, or documents showing personal information. Item photos may be visible to signed-in CampusFind users.</p>
+          {/* Item Media Upload */}
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                Item Photos or Video <span className="font-normal text-slate-400">(Optional)</span>
+              </label>
+              <p className="text-[11px] text-slate-500 mb-2">
+                Add up to two files. You can upload two photos, two videos, or one of each. One file is completely fine.
+              </p>
+              <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2.5">
+                Do not upload student ID cards, bank cards, passports, or documents showing personal information. Uploaded media can be viewed by CampusFind visitors.
+              </p>
+            </div>
 
-            {imageUrl ? (
-              <div className="relative rounded-xl overflow-hidden min-h-[220px] sm:min-h-[280px] max-h-[50vh] bg-slate-100 border border-slate-200 mb-3 flex items-center justify-center">
-                <img
-                  src={imageUrl}
-                  alt="Item Preview"
-                  referrerPolicy="no-referrer"
-                  className="w-full max-h-[50vh] object-contain"
-                />
-                <button
-                  type="button"
-                  onClick={() => setImageUrl('')}
-                  className="absolute top-2 right-2 p-1 bg-slate-900/80 text-white rounded-md hover:bg-slate-900 text-xs"
-                >
-                  Remove Photo
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-300 hover:border-blue-900 rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100/50 transition-colors">
-                  <Upload className="w-6 h-6 text-slate-400 mb-2" />
-                  <span className="text-xs font-semibold text-slate-700">
-                    Click to browse or drop photo
-                  </span>
-                  <span className="text-[11px] text-slate-400 mt-0.5">JPG, PNG or WebP · Maximum 5MB</span>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                </label>
-
-
+            {mediaFiles.length > 0 && (
+              <div className={`grid gap-3 ${mediaFiles.length === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
+                {mediaFiles.map((file, index) => (
+                  <div key={`${file.name}-${index}`} className="relative min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-950">
+                    <div className="aspect-video w-full flex items-center justify-center">
+                      {file.type.startsWith('video/') ? (
+                        <video
+                          src={mediaPreviews[index]}
+                          controls
+                          playsInline
+                          preload="metadata"
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <img
+                          src={mediaPreviews[index]}
+                          alt={`Item preview ${index + 1}`}
+                          className="w-full h-full object-contain bg-slate-100"
+                        />
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between gap-2 bg-white px-3 py-2">
+                      <span className="flex min-w-0 items-center gap-1.5 text-[11px] font-medium text-slate-700">
+                        {file.type.startsWith('video/') ? <Video className="w-3.5 h-3.5 shrink-0" /> : <ImageIcon className="w-3.5 h-3.5 shrink-0" />}
+                        <span className="truncate">{file.name}</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setMediaFiles((current) => current.filter((_, fileIndex) => fileIndex !== index))}
+                        className="shrink-0 rounded-md px-2 py-1 text-[11px] font-semibold text-rose-700 hover:bg-rose-50"
+                        aria-label={`Remove ${file.name}`}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
-          </div>
 
-          {errors.image && <p className="text-xs text-rose-600 mt-2">{errors.image}</p>}
+            {mediaFiles.length < 2 && (
+              <label className="flex min-h-28 flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-5 text-center transition-colors hover:border-blue-900 hover:bg-blue-50/40 cursor-pointer">
+                <Upload className="mb-2 h-6 w-6 text-slate-400" />
+                <span className="text-xs font-semibold text-slate-700">
+                  {mediaFiles.length === 0 ? 'Choose a photo or video' : 'Add a second photo or video'}
+                </span>
+                <span className="mt-1 text-[11px] text-slate-400">
+                  JPG, PNG, WebP · 5MB max per photo · MP4, WebM, MOV · 20MB max per video
+                </span>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
+                  multiple
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </label>
+            )}
+
+            {errors.media && <p className="text-xs text-rose-600" role="alert">{errors.media}</p>}
+          </div>
 
           {/* Reporter Preview Info */}
           <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600">
