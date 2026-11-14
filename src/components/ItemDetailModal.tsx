@@ -33,10 +33,13 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
   onSelectRelated
 }) => {
   const { items, currentUser, markItemRecovered } = useApp();
-  const [imageError, setImageError] = useState(false);
+  const [mediaErrors, setMediaErrors] = useState<Record<number, boolean>>({});
 
   if (!item) return null;
 
+  const mediaItems = item.mediaItems?.length
+    ? item.mediaItems
+    : item.imageUrl ? [{ url: item.imageUrl, type: 'image' as const }] : [];
   const isLost = item.type === 'lost';
   const isRecovered = item.status === 'recovered';
   const isOwner = !!currentUser && currentUser.studentId === item.reporterStudentId;
@@ -81,16 +84,40 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
 
         {/* Modal Body */}
         <div className="p-6 space-y-6">
-          {/* Main Visual */}
-          {item.imageUrl && !imageError ? (
-            <div className="w-full h-[min(55vh,520px)] rounded-xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center">
-              <img
-                src={item.imageUrl}
-                alt={item.title}
-                referrerPolicy="no-referrer"
-                onError={() => setImageError(true)}
-                className="w-full h-full object-contain"
-              />
+          {/* Item Photos and Video */}
+          {mediaItems.length > 0 ? (
+            <div className={`grid gap-3 ${mediaItems.length === 1 ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
+              {mediaItems.map((media, index) => (
+                <div key={`${media.url}-${index}`} className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-950">
+                  <div className="aspect-video w-full flex items-center justify-center">
+                    {mediaErrors[index] ? (
+                      <div className="p-5 text-center text-xs text-white/80">This media file could not be displayed.</div>
+                    ) : media.type === 'video' ? (
+                      <video
+                        src={media.url}
+                        controls
+                        playsInline
+                        preload="metadata"
+                        onError={() => setMediaErrors((current) => ({ ...current, [index]: true }))}
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <img
+                        src={media.url}
+                        alt={`${item.title} photo ${index + 1}`}
+                        referrerPolicy="no-referrer"
+                        onError={() => setMediaErrors((current) => ({ ...current, [index]: true }))}
+                        className="w-full h-full object-contain bg-slate-100"
+                      />
+                    )}
+                  </div>
+                  {mediaItems.length > 1 && (
+                    <div className="bg-white px-3 py-2 text-[11px] font-medium text-slate-600">
+                      {media.type === 'video' ? 'Video' : 'Photo'} {index + 1}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           ) : (
             <div className="rounded-xl p-8 bg-slate-50 border border-slate-200 flex flex-col items-center justify-center text-center">
@@ -102,9 +129,7 @@ export const ItemDetailModal: React.FC<ItemDetailModalProps> = ({
                 {isLost ? <AlertCircle className="w-7 h-7" /> : <CheckCircle2 className="w-7 h-7" />}
               </div>
               <p className="text-sm font-semibold text-slate-800">{item.title}</p>
-              <p className="text-xs text-slate-500 mt-1">
-                {'No photo was uploaded with this report.'}
-              </p>
+              <p className="text-xs text-slate-500 mt-1">No photo or video was uploaded with this report.</p>
             </div>
           )}
 
