@@ -482,6 +482,35 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
                 <p className="text-slate-700 leading-relaxed">{selectedClaimForReview.proofDescription}</p>
               </div>
 
+              {selectedClaimForReview.proofDocumentUrl && (
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
+                  <div className="font-semibold text-slate-800">Supporting Evidence Attachment</div>
+                  {/\\.(mp4|webm|mov)(?:$|\\?)/i.test(selectedClaimForReview.proofDocumentUrl) ? (
+                    <video
+                      src={selectedClaimForReview.proofDocumentUrl}
+                      controls
+                      playsInline
+                      className="w-full max-h-64 rounded-lg bg-black"
+                    />
+                  ) : /\\.(jpg|jpeg|png|webp)(?:$|\\?)/i.test(selectedClaimForReview.proofDocumentUrl) ? (
+                    <img
+                      src={selectedClaimForReview.proofDocumentUrl}
+                      alt="Claim supporting evidence"
+                      className="w-full max-h-64 rounded-lg object-contain bg-white"
+                    />
+                  ) : (
+                    <a
+                      href={selectedClaimForReview.proofDocumentUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-semibold text-blue-800 underline underline-offset-2"
+                    >
+                      Open supporting PDF
+                    </a>
+                  )}
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-semibold text-slate-800 mb-1">
                   Administrative Action Decision *
