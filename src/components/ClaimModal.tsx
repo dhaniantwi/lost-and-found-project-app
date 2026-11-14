@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ItemReport } from '../types';
 import { useApp } from '../context/AppContext';
-import { X, ShieldAlert, CheckCircle2, FileText, Upload, Film, Image as ImageIcon } from 'lucide-react';
+import { X, CheckCircle2, FileText, Upload, Film, Image as ImageIcon, Trash2, Clock } from 'lucide-react';
 
 interface ClaimModalProps {
   item: ItemReport | null;
@@ -10,13 +10,14 @@ interface ClaimModalProps {
 }
 
 export const ClaimModal: React.FC<ClaimModalProps> = ({ item, isOpen, onClose }) => {
-  const { currentUser, submitClaim } = useApp();
+  const { currentUser, authUser, claims, submitClaim, deleteClaim } = useApp();
 
   const [proofDescription, setProofDescription] = useState('');
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [proofPreviewUrl, setProofPreviewUrl] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (!proofFile) {
@@ -29,6 +30,22 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({ item, isOpen, onClose })
   }, [proofFile]);
 
   if (!isOpen || !item || !currentUser) return null;
+
+  const existingClaim = claims.find((claim) => claim.itemId === item.id && claim.claimantId === authUser?.id);
+
+  const handleDeleteClaim = async () => {
+    if (!existingClaim || existingClaim.status !== 'pending') return;
+    if (!window.confirm('Delete your pending claim for this item? You will be able to submit a new claim later if needed.')) return;
+    setIsDeleting(true);
+    setError('');
+    try {
+      await deleteClaim(existingClaim.id);
+    } catch (err: any) {
+      setError(err?.message || 'Unable to delete your claim.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -97,6 +114,51 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({ item, isOpen, onClose })
         </div>
 
         {/* Form Body */}
+        {existingClaim ? (
+          <div className="p-6 space-y-5">
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+              <div className="flex items-center gap-2 text-emerald-800 font-semibold text-sm">
+                <CheckCircle2 className="w-5 h-5" />
+                Claim already submitted
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-emerald-900">
+                You have already submitted an ownership claim for <strong>{item.title}</strong>. You cannot submit another claim for this item while this claim exists.
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2 text-xs text-slate-700">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-500">Claim status</span>
+                <span className="font-semibold capitalize">{existingClaim.status}</span>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-slate-500">Submitted</span>
+                <span>{new Date(existingClaim.submittedAt).toLocaleString()}</span>
+              </div>
+              <div className="pt-2 border-t border-slate-200">
+                <span className="text-slate-500 block mb-1">Your proof details</span>
+                <p className="whitespace-pre-wrap">{existingClaim.proofDescription}</p>
+              </div>
+              {existingClaim.adminNotes && (
+                <div className="pt-2 border-t border-slate-200">
+                  <span className="text-slate-500 block mb-1">Security Desk response</span>
+                  <p className="whitespace-pre-wrap">{existingClaim.adminNotes}</p>
+                </div>
+              )}
+            </div>
+            {existingClaim.status === 'pending' ? (
+              <button type="button" onClick={handleDeleteClaim} disabled={isDeleting} className="w-full flex items-center justify-center gap-2 rounded-lg bg-rose-50 border border-rose-200 px-4 py-2.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-50">
+                <Trash2 className="w-4 h-4" />
+                {isDeleting ? 'Withdrawing claim…' : 'Delete My Claim'}
+              </button>
+            ) : (
+              <p className="text-[11px] text-slate-500 flex items-start gap-2"><Clock className="w-4 h-4 shrink-0" />This claim has already been reviewed or collected and cannot be deleted here. Please contact the Security Desk if you need assistance.</p>
+            )}
+            {error && <div className="text-xs text-rose-700 bg-rose-50 p-2.5 rounded-lg border border-rose-200">{error}</div>}
+            <div className="flex justify-end pt-2 border-t border-slate-100">
+              <button type="button" onClick={onClose} className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-lg">Close</button>
+            </div>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* Item Summary Banner */}
           <div className="p-3.5 bg-blue-50/60 rounded-xl border border-blue-100 text-xs">
@@ -229,10 +291,11 @@ export const ClaimModal: React.FC<ClaimModalProps> = ({ item, isOpen, onClose })
               type="submit"
               className="px-5 py-2 text-xs font-semibold text-white bg-blue-900 hover:bg-blue-800 rounded-lg shadow-xs transition-colors"
             >
-              Transmit Claim to Security Desk
+              Submit Claim
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   );
