@@ -195,8 +195,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const owner = profileById.get(row.reporter_id) as StudentUser | undefined;
         const ownRecord = authUser?.id === row.reporter_id;
         const privateDetails = privateByItem.get(row.id);
-        const firstMediaUrl = await privateItemPhotoUrl(row.image_path);
-        const secondMediaUrl = await privateItemPhotoUrl(row.media_path_2);
+        // The item-photos bucket is private: only the report owner and admins may request signed URLs.
+        // Do not attempt forbidden signing requests for other students' reports or public catalogue rows.
+        const canViewPrivateMedia = Boolean(authUser && (ownRecord || profile?.role === 'admin'));
+        const firstMediaUrl = canViewPrivateMedia ? await privateItemPhotoUrl(row.image_path) : undefined;
+        const secondMediaUrl = canViewPrivateMedia ? await privateItemPhotoUrl(row.media_path_2) : undefined;
         return {
           id: row.id,
           type: row.type,
@@ -463,7 +466,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         media_path_2: uploadedPaths[1] || null,
         media_type: firstType,
         media_type_2: uploadedPaths[1] ? secondType : null,
-        reward_offered: report.rewardOffered || null
+        reward_offered: report.rewardOffered || null,
+        // The database trigger requires this explicit owner confirmation whenever a reward is supplied.
+        reward_commitment_confirmed: Boolean(report.rewardOffered && report.rewardCommitmentConfirmed)
       }).select('*').single();
       if (error) throw error;
       data = inserted;
