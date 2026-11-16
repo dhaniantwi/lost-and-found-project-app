@@ -370,7 +370,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
                 Add up to two files. You can upload two photos, two videos, or one of each. One file is completely fine.
               </p>
               <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-2.5">
-                Do not upload student ID cards, bank cards, passports, or documents showing personal information. Uploaded media can be viewed by CampusFind visitors.
+                Do not upload student ID cards, bank cards, passports, or documents showing personal information. Uploaded media is private and visible only to the report owner and authorized CampusFind administrators.
               </p>
             </div>
 
