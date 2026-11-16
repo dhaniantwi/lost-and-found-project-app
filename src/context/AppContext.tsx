@@ -223,6 +223,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           status: row.status,
           claimsCount: row.claims_count || 0,
           rewardOffered: row.reward_offered || undefined,
+          rewardCommitmentConfirmed: row.reward_commitment_confirmed === true,
           resolutionDate: row.resolution_date || undefined
         } as ItemReport;
       }));
