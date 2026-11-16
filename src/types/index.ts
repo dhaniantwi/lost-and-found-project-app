@@ -75,6 +75,7 @@ export interface Claim {
   collectedBy?: string;
   recipientIdVerified?: boolean;
   handoverNotes?: string;
+  handoverEvidenceUrl?: string;
 }
 
 export interface StudentUser {
