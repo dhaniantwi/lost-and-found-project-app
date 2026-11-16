@@ -30,7 +30,8 @@ interface AppContextType {
     collectionLocation?: string,
     recipientIdVerified?: boolean,
     handoverNotes?: string,
-    handoverCode?: string
+    handoverCode?: string,
+    handoverEvidenceFile?: File
   ) => Promise<void>;
   markItemRecovered: (itemId: string) => Promise<void>;
   reviewMatchSuggestion: (suggestionId: string, decision: 'approved' | 'rejected', notes: string) => Promise<void>;
@@ -262,7 +263,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             collectedAt: row.collected_at || undefined,
             collectedBy: row.collected_by || undefined,
             recipientIdVerified: row.recipient_id_verified || false,
-            handoverNotes: row.handover_notes || undefined
+            handoverNotes: row.handover_notes || undefined,
+            handoverEvidenceUrl: await signedUrl('claim-evidence', row.handover_evidence_path)
           };
         }));
       }
@@ -655,7 +657,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     collectionLocation?: string,
     recipientIdVerified = false,
     handoverNotes?: string,
-    handoverCode?: string
+    handoverCode?: string,
+    handoverEvidenceFile?: File
   ) => {
     if (!authUser || currentUser?.role !== 'admin') throw new Error('Administrator access is required.');
     if (!adminNotes.trim()) throw new Error("Please enter the administrator's decision notes.");
@@ -665,6 +668,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (!collectionLocation?.trim()) throw new Error('A collection point is required.');
       if (!handoverNotes?.trim()) throw new Error('Please record the physical handover details.');
       if (!handoverCode || !/^\d{8}$/.test(handoverCode.trim())) throw new Error('Enter the claimant’s valid eight-digit collection code.');
+      if (handoverEvidenceFile && !['image/jpeg','image/png','image/webp','video/mp4','video/webm','video/quicktime'].includes(handoverEvidenceFile.type)) throw new Error('Handover proof must be a JPG, PNG, WebP, MP4, WebM or MOV file.');
+      if (handoverEvidenceFile && handoverEvidenceFile.size > 20 * 1024 * 1024) throw new Error('Handover proof must be 20MB or smaller.');
     }
     if (status === 'approved') {
       const { error } = await supabase.functions.invoke('campusfind-approve-claim', {
@@ -690,6 +695,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     const reviewedAt = new Date().toISOString();
+    let handoverEvidencePath: string | null = null;
+    if (status === 'collected' && handoverEvidenceFile) {
+      const extension = handoverEvidenceFile.name.split('.').pop()?.toLowerCase() || 'bin';
+      handoverEvidencePath = `${authUser.id}/handovers/${claimId}/${crypto.randomUUID()}.${extension}`;
+      const { error: evidenceUploadError } = await supabase.storage.from('claim-evidence').upload(handoverEvidencePath, handoverEvidenceFile, { contentType: handoverEvidenceFile.type, upsert: false });
+      if (evidenceUploadError) throw evidenceUploadError;
+    }
     const { error: claimError } = await supabase.from('claims').update({
       status,
       admin_notes: adminNotes.trim(),
@@ -703,9 +715,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       collected_at: status === 'collected' ? reviewedAt : null,
       collected_by: status === 'collected' ? authUser.id : null,
       recipient_id_verified: status === 'collected' ? recipientIdVerified : false,
-      handover_notes: status === 'collected' ? handoverNotes?.trim() || null : null
+      handover_notes: status === 'collected' ? handoverNotes?.trim() || null : null,
+      ...(status === 'collected' && handoverEvidencePath ? { handover_evidence_path: handoverEvidencePath } : {})
     }).eq('id', claimId).select('item_id').single();
-    if (claimError) throw claimError;
+    if (claimError) {
+      if (handoverEvidencePath) await supabase.storage.from('claim-evidence').remove([handoverEvidencePath]);
+      throw claimError;
+    }
     // A database trigger updates the item status in the same transaction as the claim decision.
     await refreshData();
     showNotification(`Claim ${status}.`);
