@@ -124,3 +124,97 @@ code, pre, .font-mono { font-family: 'JetBrains Mono', monospace; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+
+/* CampusFind visual polish: consistent surfaces, clearer controls and gentle motion */
+:root {
+  color-scheme: light;
+  --campus-navy: #102a56;
+  --campus-blue: #174a8b;
+  --campus-gold: #d9a62e;
+  --campus-surface: rgba(255, 255, 255, .92);
+}
+
+body {
+  background:
+    radial-gradient(ellipse at 8% 12%, rgba(191, 219, 254, .30), transparent 32rem),
+    radial-gradient(ellipse at 92% 24%, rgba(253, 230, 138, .18), transparent 27rem),
+    linear-gradient(180deg, #f7f9fd 0%, #f1f5fb 100%);
+}
+
+header.sticky {
+  border-bottom-color: rgba(203, 213, 225, .72);
+  box-shadow: 0 10px 34px rgba(15, 35, 68, .07);
+}
+
+header.sticky img {
+  transition: transform .25s ease;
+}
+header.sticky button:hover img { transform: scale(1.04); }
+
+main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+main select,
+main textarea {
+  border-radius: .8rem;
+  transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+
+main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):hover,
+main select:hover,
+main textarea:hover {
+  border-color: #b6c7df;
+}
+
+main input:focus,
+main select:focus,
+main textarea:focus {
+  border-color: #315f9d;
+  box-shadow: 0 0 0 4px rgba(49, 95, 157, .10);
+}
+
+main .group.bg-white.rounded-xl.border {
+  border-color: rgba(203, 213, 225, .82);
+  border-radius: 1.15rem;
+  box-shadow: 0 5px 18px rgba(15, 35, 68, .045);
+  transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease;
+}
+main .group.bg-white.rounded-xl.border:hover {
+  transform: translateY(-4px);
+  border-color: rgba(59, 105, 163, .42);
+  box-shadow: 0 18px 38px rgba(15, 35, 68, .11);
+}
+
+main .group.bg-white.rounded-xl.border img,
+main .group.bg-white.rounded-xl.border video {
+  transition: transform .45s cubic-bezier(.2,.7,.2,1);
+}
+main .group.bg-white.rounded-xl.border:hover img,
+main .group.bg-white.rounded-xl.border:hover video {
+  transform: scale(1.035);
+}
+
+main .bg-white.p-4.rounded-xl.border,
+main .bg-white.p-4.sm\\:p-5.rounded-xl.border {
+  border-color: rgba(203, 213, 225, .82);
+  border-radius: 1.2rem;
+  box-shadow: 0 8px 26px rgba(15, 35, 68, .055);
+}
+
+button {
+  transition-property: color, background-color, border-color, box-shadow, transform;
+  transition-duration: .18s;
+  transition-timing-function: ease;
+}
+button:active:not(:disabled) { transform: translateY(1px); }
+
+::selection { background: rgba(30, 64, 120, .88); color: #fff; }
+
+@media (max-width: 640px) {
+  main .group.bg-white.rounded-xl.border:hover { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  main .group.bg-white.rounded-xl.border,
+  main .group.bg-white.rounded-xl.border img,
+  main .group.bg-white.rounded-xl.border video,
+  header.sticky img { transition: none; }
+}
