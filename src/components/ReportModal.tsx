@@ -29,6 +29,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
   const [distinctMarks, setDistinctMarks] = useState('');
   const [storageLocation, setStorageLocation] = useState('Central Security Post (North Gate)');
   const [rewardOffered, setRewardOffered] = useState('');
+  const [rewardCommitmentConfirmed, setRewardCommitmentConfirmed] = useState(false);
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -81,6 +82,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
     if (!description.trim()) newErrors.description = 'Description is required';
     if (!color.trim()) newErrors.color = 'Color is required';
     if (!dateEvent) newErrors.dateEvent = 'Date is required';
+    if (type === 'lost' && rewardOffered.trim() && !rewardCommitmentConfirmed) newErrors.reward = 'Please confirm the reward commitment or remove the reward amount.';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -104,6 +106,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
       distinctMarks: distinctMarks.trim() || undefined,
       storageLocation: type === 'found' ? storageLocation.trim() : undefined,
       rewardOffered: type === 'lost' && rewardOffered.trim() ? rewardOffered.trim() : undefined,
+      rewardCommitmentConfirmed: type === 'lost' && Boolean(rewardOffered.trim()) && rewardCommitmentConfirmed,
       mediaFiles,
       reporterName: currentUser.fullName,
       reporterStudentId: currentUser.studentId,
@@ -284,8 +287,20 @@ export const ReportModal: React.FC<ReportModalProps> = ({
                   placeholder="e.g. GH₵ 50 or a gesture of gratitude"
                   className="w-full px-3.5 py-2 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900/20 focus:border-blue-900 text-slate-900"
                 />
+                {rewardOffered.trim() && (
+                  <label className="mt-2 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-[11px] leading-relaxed text-amber-950">
+                    <input
+                      type="checkbox"
+                      checked={rewardCommitmentConfirmed}
+                      onChange={(e) => setRewardCommitmentConfirmed(e.target.checked)}
+                      className="mt-0.5"
+                    />
+                    <span><strong>I confirm this reward.</strong> I am the item owner and I commit to paying the stated reward directly to the finder after CampusFind verifies that my item has been returned. I understand CampusFind does not collect, hold, guarantee, or transfer this money.</span>
+                  </label>
+                )}
+                {errors.reward && <p role="alert" className="mt-1 text-xs text-rose-600">{errors.reward}</p>}
                 <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
-                  Rewards are voluntary and separate from item recovery. CampusFind does not collect or hold reward money. Never pay a fee to claim your own property. Any promised reward should be settled only after the item is safely returned.
+                  The finder should never pay to return or claim an item. Payment is made directly by the owner only after verified handover. CampusFind does not handle reward funds; disputes can be referred to an administrator for follow-up, but payment cannot be guaranteed by the platform.
                 </p>
               </div>
             ) : (
