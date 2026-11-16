@@ -160,6 +160,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             </div>
           </div>
 
+          <div className="mt-8 max-w-xl rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-xl">
+            <p className="text-xs font-bold text-white">Need help with a lost item or account?</p>
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold text-amber-200">
+              <a href="tel:+233244719998" className="hover:text-white">Call 0244719998</a>
+              <a href="mailto:registrar@ucc.edu.gh?subject=CampusFind%20enquiry" className="hover:text-white">Email UCC Registrar</a>
+            </div>
+            <p className="mt-2 text-[10px] leading-5 text-white/55">The email is UCC's general Registrar contact, not a dedicated CampusFind support mailbox.</p>
+          </div>
+
           <div className="mt-12 hidden items-center gap-3 text-[11px] text-white/55 sm:flex">
             <span className="flex -space-x-2">
               <span className="h-7 w-7 rounded-full border-2 border-slate-900 bg-amber-200" />
