@@ -127,10 +127,10 @@ export const ReportModal: React.FC<ReportModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[92vh] overflow-y-auto border border-slate-200 shadow-xl flex flex-col">
+    <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-slate-950/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-4">
+      <div className="bg-white rounded-2xl w-full max-w-xl max-h-[96dvh] sm:max-h-[92vh] overflow-y-auto overscroll-contain border border-slate-200 shadow-xl flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-slate-100 sticky top-0 bg-white/95 backdrop-blur-xs z-10">
+        <div className="flex items-start justify-between gap-3 p-4 sm:p-5 border-b border-slate-100 sticky top-0 bg-white z-20 shrink-0">
           <div>
             <h2 className="text-xl font-bold text-slate-900">
               Submit Campus Report
@@ -142,27 +142,27 @@ export const ReportModal: React.FC<ReportModalProps> = ({
           <button
             onClick={onClose}
             disabled={isSubmitting}
-            className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors disabled:opacity-40"
+            className="shrink-0 text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors disabled:opacity-40"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-5 space-y-5 min-w-0">
           {/* Report Type Selector (Segmented buttons) */}
-          <div className="flex items-center gap-2 p-1.5 bg-slate-100 rounded-xl">
+          <div className="flex flex-col sm:flex-row items-stretch gap-2 p-1.5 bg-slate-100 rounded-xl">
             <button
               type="button"
               onClick={() => setType('lost')}
-              className={`flex-1 py-2.5 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-all ${
+              className={`w-full min-w-0 flex-1 py-3 px-2 text-xs font-bold rounded-lg flex items-center justify-center gap-2 text-center transition-all ${
                 type === 'lost'
                   ? 'bg-rose-700 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <AlertCircle className="w-4 h-4" />
-              <span>I Lost Something (Report Lost)</span>
+              <span className="min-w-0">I Lost Something (Report Lost)</span>
             </button>
             <button
               type="button"
@@ -174,7 +174,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
               }`}
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>I Found Something (Report Found)</span>
+              <span className="min-w-0">I Found Something (Report Found)</span>
             </button>
           </div>
 
@@ -194,7 +194,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
           </div>
 
           {/* Category & Color Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Category *
@@ -436,19 +436,19 @@ export const ReportModal: React.FC<ReportModalProps> = ({
           {errors.submit && <p role="alert" className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-lg p-3">{errors.submit}</p>}
 
           {/* Form Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center sm:justify-end gap-2 sm:gap-3 pt-4 border-t border-slate-100">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-40"
+              className="w-full sm:w-auto px-4 py-3 sm:py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-40"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className={`px-5 py-2 text-xs font-semibold text-white rounded-lg shadow-xs transition-colors disabled:opacity-60 disabled:cursor-wait ${
+              className={`w-full sm:w-auto px-5 py-3 sm:py-2 text-xs font-semibold text-white rounded-lg shadow-xs transition-colors disabled:opacity-60 disabled:cursor-wait ${
                 type === 'lost'
                   ? 'bg-rose-700 hover:bg-rose-800'
                   : 'bg-emerald-700 hover:bg-emerald-800'
