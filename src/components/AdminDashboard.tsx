@@ -40,6 +40,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
   const [reviewDecision, setReviewDecision] = useState<'approved' | 'rejected' | 'collected'>('approved');
 
   const [reviewNotes, setReviewNotes] = useState('');
+  const [reviewNotesError, setReviewNotesError] = useState('');
   const [collectionLocation, setCollectionLocation] = useState('Central Security Post (North Gate)');
   const [recipientIdVerified, setRecipientIdVerified] = useState(false);
   const [handoverCodeInput, setHandoverCodeInput] = useState('');
@@ -62,6 +63,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
     setSelectedClaimForReview(claim);
     setReviewDecision(claim.status === 'approved' ? 'collected' : 'approved');
     setReviewNotes('');
+    setReviewNotesError('');
     setCollectionLocation(claim.collectionLocation || 'Central Security Post (North Gate)');
     setRecipientIdVerified(false);
     setHandoverCodeInput('');
@@ -69,8 +71,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
 
   const handleConfirmReview = async () => {
     if (!selectedClaimForReview) return;
+    if (!reviewNotes.trim()) {
+      setReviewNotesError('Please enter officer notes before submitting this decision.');
+      showNotification('Officer notes are required before you can submit.');
+      return;
+    }
+    setReviewNotesError('');
     try {
-      if (!reviewNotes.trim()) throw new Error('Please enter the decision or handover notes.');
       if (reviewDecision === 'approved' && !collectionLocation.trim()) throw new Error('Enter a collection point for the student.');
       if (reviewDecision === 'collected' && !recipientIdVerified) throw new Error('Confirm that the claimant’s UCC student ID has been checked.');
       await reviewClaim(
@@ -655,13 +662,30 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
                   <label className="block text-xs font-semibold text-slate-800 mb-1">
                     Designated In-Person Collection Point
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={collectionLocation}
                     onChange={(e) => setCollectionLocation(e.target.value)}
-                    readOnly={reviewDecision === 'collected'}
-                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-900 text-slate-800"
-                  />
+                    disabled={reviewDecision === 'collected'}
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-900 text-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    {!['Central Security Post (North Gate)', 'North Gate', 'South Gate', 'Main Entrance Gate', 'Science Gate', 'Sam Jonah Library (Main Library)', 'Casely Hayford Hall', 'Atlantic Hall', 'Valco Hall', 'Oguaa Hall', 'Adehye Hall', 'Kwame Nkrumah Hall', 'SRC Hall', 'Central Administration'].includes(collectionLocation) && (
+                      <option value={collectionLocation}>{collectionLocation} (previously assigned)</option>
+                    )}
+                    <option value="Central Security Post (North Gate)">Central Security Post (North Gate)</option>
+                    <option value="North Gate">North Gate</option>
+                    <option value="South Gate">South Gate</option>
+                    <option value="Main Entrance Gate">Main Entrance Gate</option>
+                    <option value="Science Gate">Science Gate</option>
+                    <option value="Sam Jonah Library (Main Library)">Sam Jonah Library (Main Library)</option>
+                    <option value="Casely Hayford Hall">Casely Hayford Hall</option>
+                    <option value="Atlantic Hall">Atlantic Hall</option>
+                    <option value="Valco Hall">Valco Hall</option>
+                    <option value="Oguaa Hall">Oguaa Hall</option>
+                    <option value="Adehye Hall">Adehye Hall</option>
+                    <option value="Kwame Nkrumah Hall">Kwame Nkrumah Hall</option>
+                    <option value="SRC Hall">SRC Hall</option>
+                    <option value="Central Administration">Central Administration</option>
+                  </select>
                 </div>
               )}
 
@@ -703,10 +727,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
                 <textarea
                   rows={3}
                   value={reviewNotes}
-                  onChange={(e) => setReviewNotes(e.target.value)}
+                  onChange={(e) => {
+                    setReviewNotes(e.target.value);
+                    if (e.target.value.trim()) setReviewNotesError('');
+                  }}
                   placeholder={reviewDecision === 'collected' ? 'Record the date/time, item condition, and any handover details...' : 'Provide verification notes or collection instructions...'}
-                  className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-900 text-slate-800"
+                  className={`w-full px-3 py-2 text-xs bg-slate-50 border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-900 text-slate-800 ${reviewNotesError ? 'border-rose-400 ring-1 ring-rose-200' : 'border-slate-200'}`}
+                  aria-invalid={Boolean(reviewNotesError)}
+                  aria-describedby={reviewNotesError ? 'review-notes-error' : undefined}
                 />
+                {reviewNotesError && (
+                  <p id="review-notes-error" role="alert" className="mt-1.5 text-[11px] font-medium text-rose-700">
+                    {reviewNotesError}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -720,7 +754,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
               {selectedClaimForReview.status === 'pending' || selectedClaimForReview.status === 'approved' ? (
                 <button
                   onClick={handleConfirmReview}
-                  disabled={!reviewNotes.trim() || (reviewDecision === 'collected' && (!recipientIdVerified || handoverCodeInput.length !== 8))}
+                  disabled={(reviewDecision === 'collected' && (!recipientIdVerified || handoverCodeInput.length !== 8))}
                   className="px-5 py-2 text-xs font-bold text-white bg-blue-900 hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-xs"
                 >
                   {reviewDecision === 'collected' ? 'Confirm Physical Handover' : 'Execute Decision'}
