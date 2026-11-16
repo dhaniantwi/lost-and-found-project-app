@@ -121,9 +121,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         <X className="h-4 w-4" /> <span className="hidden sm:inline">Back to CampusFind</span>
       </button>
 
-      <div className="relative z-10 mx-auto grid min-h-screen w-full max-w-[1440px] grid-cols-1 items-center gap-10 px-5 py-20 sm:px-8 lg:grid-cols-[1.08fr_.92fr] lg:gap-16 lg:px-16 lg:py-12">
-        <section className="campus-auth-copy mx-auto w-full max-w-2xl text-white">
-          <div className="mb-9 inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-xl">
+      <div className="relative z-10 mx-auto grid min-h-screen w-full max-w-[1440px] grid-cols-1 items-center gap-10 px-5 py-20 sm:px-8 lg:grid-cols-[.82fr_1.18fr] lg:gap-10 xl:gap-14 lg:px-16 lg:py-12">
+        <section className="campus-auth-copy mx-auto w-full max-w-xl text-white">
+          <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-4 py-2 backdrop-blur-xl">
             <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/40 bg-white p-1 shadow-lg">
               <img src="https://commons.wikimedia.org/wiki/Special:FilePath/University_of_Cape_Coast.png" alt="University of Cape Coast coat of arms" className="h-full w-full object-contain" />
               <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-slate-900 bg-amber-300 text-slate-950"><Search className="h-3 w-3" /></span>
@@ -136,16 +136,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           <p className="mb-4 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[.3em] text-amber-300">
             <Sparkles className="h-4 w-4" /> A smarter campus. A safer way to recover.
           </p>
-          <h1 className="max-w-xl text-5xl font-black leading-[1.04] tracking-[-.055em] sm:text-6xl xl:text-7xl">
+          <h1 className="max-w-lg text-4xl font-black leading-[1.04] tracking-[-.05em] sm:text-5xl xl:text-6xl">
             Lost something?
             <span className="mt-2 block bg-gradient-to-r from-amber-200 via-yellow-100 to-white bg-clip-text text-transparent">Let's bring it</span>
             <span className="block">back to you.</span>
           </h1>
-          <p className="mt-7 max-w-lg text-sm leading-7 text-white/72 sm:text-base">
+          <p className="mt-5 max-w-md text-sm leading-6 text-white/75 sm:text-[.95rem]">
             Your UCC lost-and-found community, brought together in one place. Report an item, discover what has been found, and follow every step towards recovery.
           </p>
 
-          <div className="mt-10 grid max-w-xl grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="mt-7 grid max-w-lg grid-cols-1 gap-2.5 sm:grid-cols-3">
             <div className="campus-auth-feature">
               <Search className="h-5 w-5 text-amber-300" />
               <span>Explore reports</span>
@@ -160,7 +160,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          <div className="mt-8 max-w-xl rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-xl">
+          <div className="mt-6 max-w-lg rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-xl">
             <p className="text-xs font-bold text-white">Need help with a lost item or account?</p>
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold text-amber-200">
               <a href="tel:+233244719998" className="hover:text-white">Call 0244719998</a>
@@ -169,7 +169,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             <p className="mt-2 text-[10px] leading-5 text-white/55">The email is UCC's general Registrar contact, not a dedicated CampusFind support mailbox.</p>
           </div>
 
-          <div className="mt-12 hidden items-center gap-3 text-[11px] text-white/55 sm:flex">
+          <div className="mt-7 hidden items-center gap-3 text-[11px] text-white/55 sm:flex">
             <span className="flex -space-x-2">
               <span className="h-7 w-7 rounded-full border-2 border-slate-900 bg-amber-200" />
               <span className="h-7 w-7 rounded-full border-2 border-slate-900 bg-sky-200" />
@@ -181,7 +181,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
           </div>
         </section>
 
-        <section className="campus-auth-card-wrap mx-auto w-full max-w-[490px]">
+        <section className="campus-auth-card-wrap mx-auto w-full max-w-[540px]">
           <div className="mb-4 flex items-center justify-between px-1 text-[10px] font-bold uppercase tracking-[.2em] text-white/65">
             <span className="inline-flex items-center gap-2"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" /> Secure student portal</span>
             <span>CampusFind / 01</span>
