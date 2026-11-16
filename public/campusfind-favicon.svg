@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <clipPath id="circle"><circle cx="64" cy="64" r="60"/></clipPath>
+  </defs>
+  <circle cx="64" cy="64" r="62" fill="#0b2347"/>
+  <circle cx="64" cy="64" r="58.5" fill="#fff" stroke="#d6ad45" stroke-width="3"/>
+  <image href="https://commons.wikimedia.org/wiki/Special:FilePath/University_of_Cape_Coast.png"
+         x="12" y="12" width="104" height="104"
+         preserveAspectRatio="xMidYMid meet" clip-path="url(#circle)"/>
+</svg>
