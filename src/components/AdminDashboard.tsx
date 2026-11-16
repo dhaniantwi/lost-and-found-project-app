@@ -502,14 +502,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
               {selectedClaimForReview.proofDocumentUrl && (
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
                   <div className="font-semibold text-slate-800">Supporting Evidence Attachment</div>
-                  {/\\.(mp4|webm|mov)(?:$|\\?)/i.test(selectedClaimForReview.proofDocumentUrl) ? (
+                  {/\.(mp4|webm|mov)(?:$|\?)/i.test(selectedClaimForReview.proofDocumentUrl) ? (
                     <video
                       src={selectedClaimForReview.proofDocumentUrl}
                       controls
                       playsInline
                       className="w-full max-h-64 rounded-lg bg-black"
                     />
-                  ) : /\\.(jpg|jpeg|png|webp)(?:$|\\?)/i.test(selectedClaimForReview.proofDocumentUrl) ? (
+                  ) : /\.(jpg|jpeg|png|webp)(?:$|\?)/i.test(selectedClaimForReview.proofDocumentUrl) ? (
                     <img
                       src={selectedClaimForReview.proofDocumentUrl}
                       alt="Claim supporting evidence"
