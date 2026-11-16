@@ -107,11 +107,19 @@ function CampusFindApp() {
             <span aria-hidden="true" className="text-slate-300">·</span>
             <span>University of Cape Coast, Ghana</span>
           </div>
-          <div className="flex items-center gap-4 text-slate-500 text-[11px]">
-            <span>Software Engineering Course Project</span>
-            <span aria-hidden="true" className="text-slate-300">·</span>
-            <span>Directorate of University Security</span>
-            <button onClick={() => setActiveTab('project-docs')} className="text-blue-900 font-medium hover:underline">SE Project Hub & SRS</button>
+          <div className="flex flex-col items-center gap-3 text-[11px] text-slate-500 sm:items-end">
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <span>Software Engineering Course Project</span>
+              <span aria-hidden="true" className="text-slate-300">·</span>
+              <span>Directorate of University Security</span>
+              <button onClick={() => setActiveTab('project-docs')} className="text-blue-900 font-medium hover:underline">SE Project Hub & SRS</button>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 sm:justify-end">
+              <span className="font-bold text-slate-700">Need help or want to report an issue?</span>
+              <a href="tel:+233244719998" className="font-semibold text-blue-900 hover:underline">Call 0244719998</a>
+              <a href="mailto:registrar@ucc.edu.gh?subject=CampusFind%20enquiry" className="font-semibold text-blue-900 hover:underline">Email UCC Registrar</a>
+            </div>
+            <span className="max-w-xl text-center text-[10px] text-slate-400 sm:text-right">The email links to UCC's general Registrar contact; it is not a dedicated CampusFind support mailbox.</span>
           </div>
         </div>
       </footer>
