@@ -635,18 +635,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (!handoverNotes?.trim()) throw new Error('Please record the physical handover details.');
       if (!handoverCode || !/^\d{8}$/.test(handoverCode.trim())) throw new Error('Enter the claimant’s valid eight-digit collection code.');
     }
+    if (status === 'approved') {
+      const { error } = await supabase.functions.invoke('campusfind-approve-claim', {
+        body: {
+          claimId,
+          adminNotes: adminNotes.trim(),
+          collectionLocation: collectionLocation!.trim()
+        }
+      });
+      if (error) {
+        let message = error.message || 'Claim approval and email delivery failed.';
+        try {
+          const details = (error as any).context?.json ? await (error as any).context.json() : null;
+          if (details?.error) message = details.error;
+        } catch {
+          // Keep the SDK error when no structured response is available.
+        }
+        throw new Error(message);
+      }
+      await refreshData();
+      showNotification('Claim approved. The student has been emailed their collection code.');
+      return;
+    }
+
     const reviewedAt = new Date().toISOString();
-    const collectionCode = status === 'approved' ? generateCollectionCode() : null;
-    const collectionCodeExpiresAt = status === 'approved'
-      ? new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
-      : null;
-    const { data: claim, error: claimError } = await supabase.from('claims').update({
+    const { error: claimError } = await supabase.from('claims').update({
       status,
       admin_notes: adminNotes.trim(),
-      collection_location: status === 'approved' || status === 'collected' ? collectionLocation?.trim() || null : null,
-      collection_code: collectionCode,
-      collection_code_expires_at: collectionCodeExpiresAt,
-      collection_code_issued_at: status === 'approved' ? reviewedAt : null,
+      collection_location: status === 'collected' ? collectionLocation?.trim() || null : null,
+      collection_code: null,
+      collection_code_expires_at: null,
+      collection_code_issued_at: null,
       handover_code: status === 'collected' ? handoverCode?.trim() : null,
       reviewed_by: authUser.id,
       reviewed_at: reviewedAt,
