@@ -66,6 +66,11 @@ export interface Claim {
   reviewedAt?: string;
   reviewedBy?: string;
   collectionLocation?: string;
+  collectionCode?: string;
+  collectionCodeExpiresAt?: string;
+  collectionCodeIssuedAt?: string;
+  collectionCodeUsedAt?: string;
+  collectionCodeLast4?: string;
   collectedAt?: string;
   collectedBy?: string;
   recipientIdVerified?: boolean;
