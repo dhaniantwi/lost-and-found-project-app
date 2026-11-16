@@ -297,7 +297,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                     </div>
                   )}
 
-                  {claim.status === 'approved' && claim.collectionCode && (
+                  {claim.status === 'approved' && claim.collectionCode && claim.collectionCodeExpiresAt && new Date(claim.collectionCodeExpiresAt).getTime() > Date.now() && (
                     <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 space-y-2">
                       <div className="flex items-center justify-between gap-2">
                         <span className="text-xs font-bold uppercase tracking-wide text-emerald-900">Your one-time collection code</span>
@@ -323,7 +323,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                     </div>
                   )}
 
-                  {claim.status === 'approved' && !claim.collectionCode && (
+                  {claim.status === 'approved' && (!claim.collectionCode || !claim.collectionCodeExpiresAt || new Date(claim.collectionCodeExpiresAt).getTime() <= Date.now()) && (
                     <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
                       Your claim is approved, but its collection code is unavailable or has expired. Please contact the CampusFind Security Desk to request a fresh code.
                     </div>
