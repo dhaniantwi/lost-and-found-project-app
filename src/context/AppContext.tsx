@@ -76,24 +76,29 @@ const signedUrl = async (bucket: string, path?: string | null) => {
   return data.signedUrl;
 };
 
-// Item photos live in a private bucket. Signed URLs are issued only when the
-// current user passes the storage policy (report owner or CampusFind admin).
-const privateItemPhotoUrl = async (path?: string | null) => {
+// Item report media is intentionally public so every visitor can inspect catalogue entries.
+// Claim documents and handover evidence remain in the separate private claim-evidence bucket.
+const publicItemPhotoUrl = (path?: string | null) => {
   if (!path) return undefined;
   if (path.startsWith('data:')) return path;
 
-  // Convert legacy public Storage URLs into private object paths after the bucket
-  // is made private. Keep unrelated external legacy URLs unchanged.
-  const publicMarker = '/storage/v1/object/public/item-photos/';
-  const markerIndex = path.indexOf(publicMarker);
+  // Recover object paths from legacy public or signed Storage URLs.
+  const marker = '/storage/v1/object/';
+  const markerIndex = path.indexOf(marker);
   let objectPath = path;
   if (markerIndex >= 0) {
-    objectPath = decodeURIComponent(path.slice(markerIndex + publicMarker.length).split('?')[0]);
+    const remainder = path.slice(markerIndex + marker.length);
+    const bucketPrefix = remainder.match(/^(?:public|sign)\/item-photos\//);
+    if (bucketPrefix) {
+      objectPath = decodeURIComponent(remainder.slice(bucketPrefix[0].length).split('?')[0]);
+    } else {
+      return path;
+    }
   } else if (/^https?:\/\//i.test(path)) {
     return path;
   }
 
-  return signedUrl('item-photos', objectPath);
+  return supabase.storage.from('item-photos').getPublicUrl(objectPath).data.publicUrl;
 };
 
 const generateCollectionCode = () => {
@@ -195,11 +200,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const owner = profileById.get(row.reporter_id) as StudentUser | undefined;
         const ownRecord = authUser?.id === row.reporter_id;
         const privateDetails = privateByItem.get(row.id);
-        // The item-photos bucket is private: only the report owner and admins may request signed URLs.
-        // Do not attempt forbidden signing requests for other students' reports or public catalogue rows.
-        const canViewPrivateMedia = Boolean(authUser && (ownRecord || profile?.role === 'admin'));
-        const firstMediaUrl = canViewPrivateMedia ? await privateItemPhotoUrl(row.image_path) : undefined;
-        const secondMediaUrl = canViewPrivateMedia ? await privateItemPhotoUrl(row.media_path_2) : undefined;
+        // Item photos/videos are public catalogue media; private claim evidence remains separate.
+        const firstMediaUrl = publicItemPhotoUrl(row.image_path);
+        const secondMediaUrl = publicItemPhotoUrl(row.media_path_2);
         return {
           id: row.id,
           type: row.type,
