@@ -13,13 +13,13 @@ export function calculateMatchScore(lostItem: ItemReport, foundItem: ItemReport)
   let score = 0;
   const reasons: string[] = [];
 
-  // 1. Category check (Critical baseline: 35 points)
-  if (lostItem.category === foundItem.category) {
+  // 1. Category is useful evidence, but should not block a genuine match.
+  const categoriesMatch = lostItem.category.trim().toLowerCase() === foundItem.category.trim().toLowerCase();
+  if (categoriesMatch) {
     score += 35;
     reasons.push(`Matching category: ${lostItem.category}`);
   } else {
-    // If categories are completely disparate, maximum score is capped low
-    return null;
+    reasons.push(`Different categories: ${lostItem.category} / ${foundItem.category} — inspect item details`);
   }
 
   // 2. Color check (15 points)
@@ -104,7 +104,7 @@ export function calculateMatchScore(lostItem: ItemReport, foundItem: ItemReport)
   const finalScore = Math.min(100, Math.max(0, score));
 
   // Only consider pairs that score 40% or higher as viable candidate matches
-  if (finalScore >= 40) {
+  if ((categoriesMatch && finalScore >= 40) || (!categoriesMatch && finalScore >= 45)) {
     return {
       lostItem,
       foundItem,
