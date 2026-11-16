@@ -569,7 +569,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
               {selectedClaimForReview.handoverEvidenceUrl && (
                 <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 space-y-2">
                   <div className="font-semibold text-emerald-900">Recorded Handover Evidence</div>
-                  {/\\.(mp4|webm|mov)(?:$|\\?)/i.test(selectedClaimForReview.handoverEvidenceUrl) ? (
+                  {/\.(mp4|webm|mov)(?:$|\?)/i.test(selectedClaimForReview.handoverEvidenceUrl) ? (
                     <video src={selectedClaimForReview.handoverEvidenceUrl} controls playsInline className="w-full max-h-64 rounded-lg bg-black" />
                   ) : (
                     <img src={selectedClaimForReview.handoverEvidenceUrl} alt="Physical item handover evidence" className="w-full max-h-64 rounded-lg object-contain bg-white" />
