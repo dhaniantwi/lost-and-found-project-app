@@ -409,10 +409,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const inferredTypes: Record<string, string> = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime' };
         const contentType = file.type || inferredTypes[extension] || 'application/octet-stream';
         const path = `${authUser.id}/${crypto.randomUUID()}.${extension}`;
-        const { error: uploadError } = await supabase.storage.from('item-photos').upload(path, file, {
+        const storage = supabase.storage.from('item-photos');
+        let { error: uploadError } = await storage.upload(path, file, {
           contentType,
-          upsert: false
+          upsert: true
         });
+        // A lost browser response can leave the first upload completed on the server.
+        // Reusing the same path with upsert makes one network retry safe.
+        if (uploadError?.message?.toLowerCase().includes('failed to fetch')) {
+          await new Promise((resolve) => window.setTimeout(resolve, 500));
+          ({ error: uploadError } = await storage.upload(path, file, {
+            contentType,
+            upsert: true
+          }));
+        }
         if (uploadError) throw uploadError;
         uploadedPaths.push(path);
       }
