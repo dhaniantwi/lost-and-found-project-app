@@ -44,6 +44,9 @@ jobs:
           path: ./dist
 
   deploy:
+    # Manual runs from feature branches validate the build but must never publish
+    # an unmerged branch to the live GitHub Pages site.
+    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
