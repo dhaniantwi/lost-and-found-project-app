@@ -31,6 +31,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
   const [rewardOffered, setRewardOffered] = useState('');
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [mediaPreviews, setMediaPreviews] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const urls = mediaFiles.map((file) => URL.createObjectURL(file));
@@ -53,8 +54,9 @@ export const ReportModal: React.FC<ReportModalProps> = ({
         uploadError = 'You can upload a maximum of two files per report.';
         break;
       }
-      const isImage = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
-      const isVideo = ['video/mp4', 'video/webm', 'video/quicktime'].includes(file.type);
+      const extension = file.name.split('.').pop()?.toLowerCase() || '';
+      const isImage = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || ['jpg', 'jpeg', 'png', 'webp'].includes(extension);
+      const isVideo = ['video/mp4', 'video/webm', 'video/quicktime'].includes(file.type) || ['mp4', 'webm', 'mov'].includes(extension);
       if (!isImage && !isVideo) {
         uploadError = 'Choose JPG, PNG, WebP, MP4, WebM, or MOV files.';
         continue;
@@ -85,9 +87,10 @@ export const ReportModal: React.FC<ReportModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (isSubmitting || !validate()) return;
     if (!currentUser) { setErrors({ submit: 'Sign in before submitting a report.' }); return; }
 
+    setIsSubmitting(true);
     try {
       await addItemReport({
       type,
@@ -111,7 +114,12 @@ export const ReportModal: React.FC<ReportModalProps> = ({
       setMediaFiles([]);
       onClose();
     } catch (error: any) {
-      setErrors((current) => ({ ...current, submit: error?.message || 'Unable to publish this report.' }));
+      const message = error?.message === 'Failed to fetch'
+        ? 'The connection to CampusFind was interrupted while uploading your photo or saving the report. Your details are still here. Please check your internet connection and try again.'
+        : error?.message || 'Unable to publish this report. Your details are still here; please try again.';
+      setErrors((current) => ({ ...current, submit: message }));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -130,7 +138,8 @@ export const ReportModal: React.FC<ReportModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            disabled={isSubmitting}
+            className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition-colors disabled:opacity-40"
           >
             <X className="w-5 h-5" />
           </button>
@@ -416,19 +425,21 @@ export const ReportModal: React.FC<ReportModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+              disabled={isSubmitting}
+              className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-lg transition-colors disabled:opacity-40"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className={`px-5 py-2 text-xs font-semibold text-white rounded-lg shadow-xs transition-colors ${
+              disabled={isSubmitting}
+              className={`px-5 py-2 text-xs font-semibold text-white rounded-lg shadow-xs transition-colors disabled:opacity-60 disabled:cursor-wait ${
                 type === 'lost'
                   ? 'bg-rose-700 hover:bg-rose-800'
                   : 'bg-emerald-700 hover:bg-emerald-800'
               }`}
             >
-              Publish {type === 'lost' ? 'Lost Item' : 'Found Item'} Report
+              {isSubmitting ? 'Submitting report…' : `Publish ${type === 'lost' ? 'Lost Item' : 'Found Item'} Report`}
             </button>
           </div>
         </form>
