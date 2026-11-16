@@ -44,6 +44,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
   const [collectionLocation, setCollectionLocation] = useState('Central Security Post (North Gate)');
   const [recipientIdVerified, setRecipientIdVerified] = useState(false);
   const [handoverCodeInput, setHandoverCodeInput] = useState('');
+  const [handoverEvidenceFile, setHandoverEvidenceFile] = useState<File | null>(null);
   const [reportSearch, setReportSearch] = useState('');
 
   if (currentUser?.role !== 'admin') return null;
@@ -67,6 +68,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
     setCollectionLocation(claim.collectionLocation || 'Central Security Post (North Gate)');
     setRecipientIdVerified(false);
     setHandoverCodeInput('');
+    setHandoverEvidenceFile(null);
   };
 
   const handleConfirmReview = async () => {
@@ -87,7 +89,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
         collectionLocation,
         recipientIdVerified,
         reviewDecision === 'collected' ? reviewNotes : undefined,
-        reviewDecision === 'collected' ? handoverCodeInput : undefined
+        reviewDecision === 'collected' ? handoverCodeInput : undefined,
+        reviewDecision === 'collected' ? handoverEvidenceFile || undefined : undefined
       );
       setSelectedClaimForReview(null);
     } catch (error: any) {
@@ -563,6 +566,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
                 <p className="text-slate-700 leading-relaxed">{selectedClaimForReview.proofDescription}</p>
               </div>
 
+              {selectedClaimForReview.handoverEvidenceUrl && (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 space-y-2">
+                  <div className="font-semibold text-emerald-900">Recorded Handover Evidence</div>
+                  {/\\.(mp4|webm|mov)(?:$|\\?)/i.test(selectedClaimForReview.handoverEvidenceUrl) ? (
+                    <video src={selectedClaimForReview.handoverEvidenceUrl} controls playsInline className="w-full max-h-64 rounded-lg bg-black" />
+                  ) : (
+                    <img src={selectedClaimForReview.handoverEvidenceUrl} alt="Physical item handover evidence" className="w-full max-h-64 rounded-lg object-contain bg-white" />
+                  )}
+                  <p className="text-[11px] text-emerald-800">Private evidence retained with this claim for authorized administrators.</p>
+                </div>
+              )}
+
               {selectedClaimForReview.proofDocumentUrl && (
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg space-y-2">
                   <div className="font-semibold text-slate-800">Supporting Evidence Attachment</div>
@@ -703,6 +718,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
                     className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-sm tracking-[0.25em] text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-900"
                   />
                   <p className="mt-1 text-[11px] text-slate-500">The code is one-time use and expires 48 hours after approval or reissue.</p>
+                </div>
+              )}
+
+              {reviewDecision === 'collected' && (
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 space-y-2">
+                  <label className="block text-xs font-semibold text-slate-800">Photo / Video Proof of Physical Handover (Optional)</label>
+                  <input type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime" onChange={(e) => setHandoverEvidenceFile(e.target.files?.[0] || null)} className="block w-full text-xs text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-900 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-white" />
+                  <p className="text-[11px] text-slate-600">Attach a photo of the item at collection or a short handover video. JPG, PNG, WebP, MP4, WebM or MOV · max 20MB. Stored privately for authorized administrators only.</p>
+                  {handoverEvidenceFile && <div className="text-[11px] font-medium text-emerald-800">Selected: {handoverEvidenceFile.name}</div>}
                 </div>
               )}
 
