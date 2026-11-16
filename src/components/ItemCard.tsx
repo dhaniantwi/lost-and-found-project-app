@@ -27,9 +27,10 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onSelect, onClaim }) =
             <>
               <video
                 src={firstMedia.url}
-                muted
+                controls
                 playsInline
                 preload="metadata"
+                onClick={(event) => event.stopPropagation()}
                 onError={() => setImageError(true)}
                 className="w-full h-full object-contain"
               />
