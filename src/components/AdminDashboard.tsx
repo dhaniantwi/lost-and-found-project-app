@@ -35,13 +35,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
     showNotification
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'claims' | 'reports' | 'users' | 'logs' | 'matches'>('claims');
+  const [activeTab, setActiveTab] = useState<'claims' | 'handovers' | 'reports' | 'users' | 'logs' | 'matches'>('claims');
   const [selectedClaimForReview, setSelectedClaimForReview] = useState<Claim | null>(null);
   const [reviewDecision, setReviewDecision] = useState<'approved' | 'rejected' | 'collected'>('approved');
 
   const [reviewNotes, setReviewNotes] = useState('');
   const [collectionLocation, setCollectionLocation] = useState('Central Security Post (North Gate)');
   const [recipientIdVerified, setRecipientIdVerified] = useState(false);
+  const [handoverCodeInput, setHandoverCodeInput] = useState('');
   const [reportSearch, setReportSearch] = useState('');
 
   if (currentUser?.role !== 'admin') return null;
@@ -63,6 +64,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
     setReviewNotes('');
     setCollectionLocation(claim.collectionLocation || 'Central Security Post (North Gate)');
     setRecipientIdVerified(false);
+    setHandoverCodeInput('');
   };
 
   const handleConfirmReview = async () => {
@@ -77,7 +79,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
         reviewNotes,
         collectionLocation,
         recipientIdVerified,
-        reviewDecision === 'collected' ? reviewNotes : undefined
+        reviewDecision === 'collected' ? reviewNotes : undefined,
+        reviewDecision === 'collected' ? handoverCodeInput : undefined
       );
       setSelectedClaimForReview(null);
     } catch (error: any) {
@@ -182,6 +185,16 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
         >
           <FileCheck2 className="w-4 h-4" />
           <span>Claims Verification Queue ({claims.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('handovers')}
+          className={`px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+            activeTab === 'handovers' ? 'bg-blue-900 text-white' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+          }`}
+        >
+          <Building className="w-4 h-4" />
+          <span>Item Handover ({claims.filter((claim) => claim.status === 'approved').length})</span>
         </button>
 
         <button
@@ -298,6 +311,50 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
                           >
                             {claim.status === 'pending' ? 'Review Claim' : claim.status === 'approved' ? 'Record Handover' : 'View Record'}
                           </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Item Handover Management */}
+      {activeTab === 'handovers' && (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 sm:p-5">
+            <h3 className="text-sm font-bold text-slate-900">Approved Claims Awaiting Secure Collection</h3>
+            <p className="mt-1 text-xs text-slate-600">Verify the original UCC student ID and the one-time collection code before handing over an item. Only authorized Security Desk staff should complete this record.</p>
+          </div>
+          {claims.filter((claim) => claim.status === 'approved').length === 0 ? (
+            <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-xs text-slate-500">
+              No approved claims are currently awaiting collection.
+            </div>
+          ) : (
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
+                    <tr>
+                      <th className="px-4 py-3">Item</th>
+                      <th className="px-4 py-3">Approved claimant</th>
+                      <th className="px-4 py-3">Collection point</th>
+                      <th className="px-4 py-3">Code expiry</th>
+                      <th className="px-4 py-3 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-700">
+                    {claims.filter((claim) => claim.status === 'approved').map((claim) => (
+                      <tr key={claim.id} className="hover:bg-slate-50/70">
+                        <td className="px-4 py-3 font-semibold text-slate-900">{claim.itemTitle}<div className="mt-0.5 font-mono text-[10px] text-slate-400">{claim.id}</div></td>
+                        <td className="px-4 py-3">{claim.claimantName}<div className="mt-0.5 font-mono text-[11px] text-slate-400">{claim.claimantStudentId}</div></td>
+                        <td className="px-4 py-3">{claim.collectionLocation || 'Not assigned'}</td>
+                        <td className="px-4 py-3">{claim.collectionCodeExpiresAt ? new Date(claim.collectionCodeExpiresAt).toLocaleString() : 'Code needs reissue'}</td>
+                        <td className="px-4 py-3 text-right whitespace-nowrap">
+                          <button onClick={() => handleOpenReviewModal(claim)} className="rounded-lg bg-blue-900 px-3 py-1.5 font-semibold text-white hover:bg-blue-800">Verify &amp; hand over</button>
                         </td>
                       </tr>
                     ))}
@@ -532,7 +589,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
                 <label className="block text-xs font-semibold text-slate-800 mb-1">
                   Administrative Action Decision *
                 </label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {selectedClaimForReview.status === 'pending' && (
                     <button
                       type="button"
@@ -557,6 +614,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
                       }`}
                     >
                       ✕ Reject Claim
+                    </button>
+                  )}
+                  {selectedClaimForReview.status === 'approved' && (
+                    <button
+                      type="button"
+                      onClick={() => setReviewDecision('approved')}
+                      className={`py-2 text-xs font-bold rounded-lg border transition-all ${
+                        reviewDecision === 'approved'
+                          ? 'bg-amber-600 text-white border-amber-600 shadow-xs'
+                          : 'bg-white text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      ↻ Reissue Collection Code
                     </button>
                   )}
                   {selectedClaimForReview.status === 'approved' && (
@@ -592,6 +662,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
                     readOnly={reviewDecision === 'collected'}
                     className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-900 text-slate-800"
                   />
+                </div>
+              )}
+
+              {reviewDecision === 'collected' && (
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-slate-800">Claimant’s one-time collection code *</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    maxLength={8}
+                    value={handoverCodeInput}
+                    onChange={(e) => setHandoverCodeInput(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                    placeholder="Enter the 8-digit code shown by the claimant"
+                    className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-sm tracking-[0.25em] text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-900"
+                  />
+                  <p className="mt-1 text-[11px] text-slate-500">The code is one-time use and expires 48 hours after approval or reissue.</p>
                 </div>
               )}
 
@@ -633,7 +720,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onSelectItem }) 
               {selectedClaimForReview.status === 'pending' || selectedClaimForReview.status === 'approved' ? (
                 <button
                   onClick={handleConfirmReview}
-                  disabled={!reviewNotes.trim() || (reviewDecision === 'collected' && !recipientIdVerified)}
+                  disabled={!reviewNotes.trim() || (reviewDecision === 'collected' && (!recipientIdVerified || handoverCodeInput.length !== 8))}
                   className="px-5 py-2 text-xs font-bold text-white bg-blue-900 hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow-xs"
                 >
                   {reviewDecision === 'collected' ? 'Confirm Physical Handover' : 'Execute Decision'}
