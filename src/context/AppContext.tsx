@@ -401,19 +401,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const mediaFiles = (report.mediaFiles || []).slice(0, 2);
     const uploadedPaths: string[] = [];
     let data: any;
+    let stage = 'photo upload';
 
     try {
       for (const file of mediaFiles) {
         const extension = file.name.split('.').pop()?.toLowerCase() || (file.type === 'video/mp4' ? 'mp4' : 'jpg');
+        const inferredTypes: Record<string, string> = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime' };
+        const contentType = file.type || inferredTypes[extension] || 'application/octet-stream';
         const path = `${authUser.id}/${crypto.randomUUID()}.${extension}`;
         const { error: uploadError } = await supabase.storage.from('item-photos').upload(path, file, {
-          contentType: file.type,
+          contentType,
           upsert: false
         });
         if (uploadError) throw uploadError;
         uploadedPaths.push(path);
       }
 
+      stage = 'report record save';
       const legacyImagePath = mediaFiles.length === 0
         ? await uploadDataUrl('item-photos', authUser.id, report.imageUrl)
         : null;
@@ -436,11 +440,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }).select('*').single();
       if (error) throw error;
       data = inserted;
-    } catch (error) {
+    } catch (error: any) {
       if (uploadedPaths.length) {
         await supabase.storage.from('item-photos').remove(uploadedPaths);
       }
-      throw error;
+      const detail = error?.message === 'Failed to fetch'
+        ? 'The browser could not complete the network request. Check the connection and retry.'
+        : error?.message || 'Unknown service error.';
+      throw new Error(`CampusFind ${stage} failed: ${detail}`);
     }
     if (report.distinctMarks || report.specificSpot || report.storageLocation) {
       const { error: privateError } = await supabase.from('report_private_details').insert({
@@ -450,7 +457,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         specific_spot: report.specificSpot || null,
         storage_location: report.storageLocation || null
       });
-      if (privateError) throw privateError;
+      if (privateError) throw new Error(`Private report details could not be saved: ${privateError.message}`);
     }
     await refreshData();
     showNotification(`Your ${report.type} item report has been published.`);
