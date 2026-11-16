@@ -42,6 +42,7 @@ export interface ItemReport {
   status: ItemStatus;
   claimsCount?: number;
   rewardOffered?: string;
+  rewardCommitmentConfirmed?: boolean;
   matchedItemId?: string;
   resolutionDate?: string;
 }
