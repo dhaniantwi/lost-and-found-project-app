@@ -44,7 +44,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
       {/* Student dashboard welcome panel */}
       <section className="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 p-5 text-white shadow-xl sm:p-7">
         <video
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center opacity-35"
+          className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center opacity-55"
           src="https://videos.pexels.com/video-files/7969427/7969427-uhd_2160_3840_30fps.mp4"
           autoPlay
           muted
@@ -53,7 +53,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
           preload="auto"
           aria-hidden="true"
         />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-slate-950/90 via-blue-950/75 to-indigo-950/85" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-slate-950/68 via-blue-950/48 to-indigo-950/62" />
         <div className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full bg-cyan-400/15 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 left-1/3 h-52 w-52 rounded-full bg-blue-400/15 blur-3xl" />
         <div className="relative z-10 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
