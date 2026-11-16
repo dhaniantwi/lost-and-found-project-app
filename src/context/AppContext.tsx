@@ -175,7 +175,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       const { data: reportRows, error: reportsError } = authUser
         ? await supabase.from('item_reports')
-            .select('id, reporter_id, type, title, category, description, campus_location, date_event, color, image_path, media_path_2, media_type, media_type_2, status, reward_offered, claims_count, resolution_date, created_at')
+            .select('id, reporter_id, type, title, category, description, campus_location, date_event, color, image_path, media_path_2, media_type, media_type_2, status, reward_offered, reward_commitment_confirmed, claims_count, resolution_date, created_at')
             .order('created_at', { ascending: false })
         : await supabase.from('item_catalog')
             .select('*')
