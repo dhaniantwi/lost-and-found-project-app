@@ -341,7 +341,6 @@ export const ProjectDocumentation: React.FC = () => {
             </div>
 
             {isAdmin && (
-              {/* Tier 2: Logic */}
               <div className="bg-amber-50/50 border-2 border-amber-200 rounded-xl p-5 flex flex-col justify-between">
                 <div>
                   <div className="text-xs font-bold uppercase tracking-wider text-amber-900 mb-1">Tier 2</div>
