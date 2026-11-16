@@ -296,6 +296,44 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({
                       )}
                     </div>
                   )}
+
+                  {claim.status === 'approved' && claim.collectionCode && claim.collectionCodeExpiresAt && new Date(claim.collectionCodeExpiresAt).getTime() > Date.now() && (
+                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold uppercase tracking-wide text-emerald-900">Your one-time collection code</span>
+                        <span className="rounded-full bg-white px-2 py-1 text-[10px] font-bold text-emerald-800">Private</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-mono text-2xl font-black tracking-[0.25em] text-emerald-950">{claim.collectionCode}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void navigator.clipboard?.writeText(claim.collectionCode || '');
+                            showNotification('Collection code copied. Keep it private.');
+                          }}
+                          className="rounded-lg border border-emerald-300 bg-white px-3 py-2 text-xs font-semibold text-emerald-900 hover:bg-emerald-100"
+                        >
+                          Copy code
+                        </button>
+                      </div>
+                      <p className="text-xs leading-relaxed text-emerald-900">Collect in person at {claim.collectionLocation || 'the designated UCC Security collection desk'}. Bring your original UCC student ID and show this code only to authorized collection staff.</p>
+                      {claim.collectionCodeExpiresAt && (
+                        <p className="text-[11px] font-semibold text-emerald-800">Expires: {new Date(claim.collectionCodeExpiresAt).toLocaleString()}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {claim.status === 'approved' && (!claim.collectionCode || !claim.collectionCodeExpiresAt || new Date(claim.collectionCodeExpiresAt).getTime() <= Date.now()) && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+                      Your claim is approved, but its collection code is unavailable or has expired. Please contact the CampusFind Security Desk to request a fresh code.
+                    </div>
+                  )}
+
+                  {claim.status === 'collected' && claim.collectionCodeLast4 && (
+                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
+                      Handover verified. Collection code ending <strong className="font-mono">{claim.collectionCodeLast4}</strong> was used and invalidated.
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

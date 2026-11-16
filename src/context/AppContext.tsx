@@ -29,7 +29,8 @@ interface AppContextType {
     adminNotes: string,
     collectionLocation?: string,
     recipientIdVerified?: boolean,
-    handoverNotes?: string
+    handoverNotes?: string,
+    handoverCode?: string
   ) => Promise<void>;
   markItemRecovered: (itemId: string) => Promise<void>;
   reviewMatchSuggestion: (suggestionId: string, decision: 'approved' | 'rejected', notes: string) => Promise<void>;
@@ -80,6 +81,12 @@ const publicItemPhotoUrl = (path?: string | null) => {
   if (!path) return undefined;
   if (/^(https?:|data:|\/)/.test(path)) return path;
   return supabase.storage.from('item-photos').getPublicUrl(path).data.publicUrl;
+};
+
+const generateCollectionCode = () => {
+  const value = new Uint32Array(1);
+  crypto.getRandomValues(value);
+  return String(value[0] % 100000000).padStart(8, '0');
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -233,6 +240,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             reviewedAt: row.reviewed_at || undefined,
             reviewedBy: row.reviewed_by ? (profileById.get(row.reviewed_by) as StudentUser | undefined)?.fullName : undefined,
             collectionLocation: row.collection_location || undefined,
+            collectionCode: row.collection_code || undefined,
+            collectionCodeExpiresAt: row.collection_code_expires_at || undefined,
+            collectionCodeIssuedAt: row.collection_code_issued_at || undefined,
+            collectionCodeUsedAt: row.collection_code_used_at || undefined,
+            collectionCodeLast4: row.collection_code_last4 || undefined,
             collectedAt: row.collected_at || undefined,
             collectedBy: row.collected_by || undefined,
             recipientIdVerified: row.recipient_id_verified || false,
@@ -611,20 +623,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     adminNotes: string,
     collectionLocation?: string,
     recipientIdVerified = false,
-    handoverNotes?: string
+    handoverNotes?: string,
+    handoverCode?: string
   ) => {
     if (!authUser || currentUser?.role !== 'admin') throw new Error('Administrator access is required.');
     if (!adminNotes.trim()) throw new Error("Please enter the administrator's decision notes.");
+    if (status === 'approved' && !collectionLocation?.trim()) throw new Error('A collection point is required.');
     if (status === 'collected') {
       if (!recipientIdVerified) throw new Error("Verify the recipient's UCC student ID before recording collection.");
       if (!collectionLocation?.trim()) throw new Error('A collection point is required.');
       if (!handoverNotes?.trim()) throw new Error('Please record the physical handover details.');
+      if (!handoverCode || !/^\d{8}$/.test(handoverCode.trim())) throw new Error('Enter the claimant’s valid eight-digit collection code.');
     }
     const reviewedAt = new Date().toISOString();
+    const collectionCode = status === 'approved' ? generateCollectionCode() : null;
+    const collectionCodeExpiresAt = status === 'approved'
+      ? new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString()
+      : null;
     const { data: claim, error: claimError } = await supabase.from('claims').update({
       status,
       admin_notes: adminNotes.trim(),
       collection_location: status === 'approved' || status === 'collected' ? collectionLocation?.trim() || null : null,
+      collection_code: collectionCode,
+      collection_code_expires_at: collectionCodeExpiresAt,
+      collection_code_issued_at: status === 'approved' ? reviewedAt : null,
+      handover_code: status === 'collected' ? handoverCode?.trim() : null,
       reviewed_by: authUser.id,
       reviewed_at: reviewedAt,
       collected_at: status === 'collected' ? reviewedAt : null,
