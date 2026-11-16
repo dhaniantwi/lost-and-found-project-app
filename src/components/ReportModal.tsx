@@ -277,6 +277,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({
                 />
                 <p className="mt-1.5 text-[11px] leading-relaxed text-slate-500">
                   Rewards are voluntary and separate from item recovery. CampusFind does not collect or hold reward money. Never pay a fee to claim your own property. Any promised reward should be settled only after the item is safely returned.
+                </p>
               </div>
             ) : (
               <div>
