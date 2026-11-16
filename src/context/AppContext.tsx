@@ -75,12 +75,24 @@ const signedUrl = async (bucket: string, path?: string | null) => {
   return data.signedUrl;
 };
 
-// Item photos are intentionally public so visitors can identify reports before signing in.
-// Keep claim evidence in its separate private bucket and continue using signedUrl for it.
-const publicItemPhotoUrl = (path?: string | null) => {
+// Item photos live in a private bucket. Signed URLs are issued only when the
+// current user passes the storage policy (report owner or CampusFind admin).
+const privateItemPhotoUrl = async (path?: string | null) => {
   if (!path) return undefined;
-  if (/^(https?:|data:|\/)/.test(path)) return path;
-  return supabase.storage.from('item-photos').getPublicUrl(path).data.publicUrl;
+  if (path.startsWith('data:')) return path;
+
+  // Convert legacy public Storage URLs into private object paths after the bucket
+  // is made private. Keep unrelated external legacy URLs unchanged.
+  const publicMarker = '/storage/v1/object/public/item-photos/';
+  const markerIndex = path.indexOf(publicMarker);
+  let objectPath = path;
+  if (markerIndex >= 0) {
+    objectPath = decodeURIComponent(path.slice(markerIndex + publicMarker.length).split('?')[0]);
+  } else if (/^https?:\/\//i.test(path)) {
+    return path;
+  }
+
+  return signedUrl('item-photos', objectPath);
 };
 
 const generateCollectionCode = () => {
@@ -182,6 +194,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const owner = profileById.get(row.reporter_id) as StudentUser | undefined;
         const ownRecord = authUser?.id === row.reporter_id;
         const privateDetails = privateByItem.get(row.id);
+        const firstMediaUrl = await privateItemPhotoUrl(row.image_path);
+        const secondMediaUrl = await privateItemPhotoUrl(row.media_path_2);
         return {
           id: row.id,
           type: row.type,
@@ -195,10 +209,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           color: row.color,
           distinctMarks: privateDetails?.distinct_marks || undefined,
           storageLocation: privateDetails?.storage_location || undefined,
-          imageUrl: row.media_type === 'video' ? undefined : publicItemPhotoUrl(row.image_path),
+          imageUrl: row.media_type === 'video' ? undefined : firstMediaUrl,
           mediaItems: [
-            ...(row.image_path ? [{ url: publicItemPhotoUrl(row.image_path)!, type: row.media_type === 'video' ? 'video' as const : 'image' as const }] : []),
-            ...(row.media_path_2 ? [{ url: publicItemPhotoUrl(row.media_path_2)!, type: row.media_type_2 === 'video' ? 'video' as const : 'image' as const }] : [])
+            ...(firstMediaUrl ? [{ url: firstMediaUrl, type: row.media_type === 'video' ? 'video' as const : 'image' as const }] : []),
+            ...(secondMediaUrl ? [{ url: secondMediaUrl, type: row.media_type_2 === 'video' ? 'video' as const : 'image' as const }] : [])
           ],
           reporterName: owner?.fullName || (ownRecord ? profile?.fullName : 'UCC student'),
           reporterStudentId: owner?.studentId || (ownRecord ? profile?.studentId : ''),
