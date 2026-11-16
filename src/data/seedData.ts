@@ -23,7 +23,19 @@ export const UCC_LOCATIONS = [
   'SRC Hostel & Complex',
   'UCC Sports Stadium & Gym',
   'Faculty of Arts Lecture Theatre',
-  'School of Business Complex'
+  'School of Business Complex',
+  'UCC Main Gate',
+  'Amamoma Junction',
+  'Science Market',
+  'Old Site',
+  'New Site',
+  'University Post Office',
+  'Chapel of the Apostles',
+  'University Auditorium',
+  'SRC Centre / SRC Complex',
+  'Valco Trust Hostel Area',
+  'Apewosika Junction',
+  'Kwaprow Junction'
 ];
 
 export const UCC_DEPARTMENTS = [
