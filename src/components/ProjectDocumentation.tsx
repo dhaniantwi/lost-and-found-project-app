@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useApp } from '../context/AppContext';
 import {
   BookOpen,
   Calendar,
@@ -118,7 +119,7 @@ const SCHEDULE_DAYS = [
   { day: 'Day 6', phase: 'Phase 3: Implementation', activity: 'Student registration, role switching, authentication, and session manager', outcome: 'Authentication & RBAC', status: 'Completed' },
   { day: 'Day 7', phase: 'Phase 3: Implementation', activity: 'Lost & Found reporting modules, campus location dropdowns, category selector', outcome: 'Reporting forms', status: 'Completed' },
   { day: 'Day 8', phase: 'Phase 3: Implementation', activity: 'Image upload handling, catalog search engine, and compound filters', outcome: 'Search & Storage Engine', status: 'Completed' },
-  { day: 'Day 9', phase: 'Phase 3: Implementation', activity: 'Rule-based matching algorithm, claims system, and admin review queue', outcome: 'Matching & Admin Desk', status: 'Completed' },
+  { day: 'Day 9', phase: 'Phase 3: Implementation', activity: 'Potential-match workflow, claims system, and administrator review queue', outcome: 'Recovery & Admin Desk', status: 'Completed' },
   { day: 'Day 10', phase: 'Phase 4: Integration & Testing', activity: 'Module integration, pull request merges, and data pipeline verification', outcome: 'Fully Integrated System', status: 'Completed' },
   { day: 'Day 11', phase: 'Phase 4: Integration & Testing', activity: 'Functional test cases execution, form validation checks, edge-case debugging', outcome: 'QA & Error Log Cleared', status: 'Completed' },
   { day: 'Day 12', phase: 'Phase 4: Integration & Testing', activity: 'Cross-device responsiveness check, performance audit, and status flows', outcome: 'Production-Ready Build', status: 'Completed' },
@@ -140,6 +141,8 @@ const TEAM_MEMBERS = [
 ];
 
 export const ProjectDocumentation: React.FC = () => {
+  const { currentUser } = useApp();
+  const isAdmin = currentUser?.role === 'admin';
   const [docTab, setDocTab] = useState<'overview' | 'architecture' | 'erd' | 'schedule' | 'team' | 'testing'>('overview');
   const [testCases, setTestCases] = useState<TestCase[]>(INITIAL_TEST_CASES);
   const [isRunningTests, setIsRunningTests] = useState(false);
@@ -280,7 +283,7 @@ export const ProjectDocumentation: React.FC = () => {
                 <strong>4. Faceted Search & Filters:</strong> Sub-second queries across UCC zones, halls, and categories.
               </div>
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-                <strong>5. Algorithmic Match Correlator:</strong> Rule-based similarity engine based on token overlap & dates.
+                <strong>5. Recovery Coordination:</strong> Potential matches are reviewed by authorized CampusFind administrators.
               </div>
               <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
                 <strong>6. Confidential Claims Verification:</strong> Secret ownership proof verification by campus security.
@@ -337,30 +340,34 @@ export const ProjectDocumentation: React.FC = () => {
               </div>
             </div>
 
-            {/* Tier 2: Logic */}
-            <div className="bg-amber-50/50 border-2 border-amber-200 rounded-xl p-5 flex flex-col justify-between">
-              <div>
-                <div className="text-xs font-bold uppercase tracking-wider text-amber-900 mb-1">Tier 2</div>
-                <h4 className="font-bold text-slate-900 text-base mb-3">Service & Matching Engine</h4>
-                <div className="space-y-2 text-xs text-slate-700">
-                  <div className="p-2 bg-white rounded border border-amber-100">
-                    <strong>Rule-Based Matcher:</strong> Category (35%), color (15%), location (20%), token overlap (20%), dates (10%)
-                  </div>
-                  <div className="p-2 bg-white rounded border border-amber-100">
-                    <strong>Claims State Machine:</strong> Pending → Approved / Rejected → Handed Over
-                  </div>
-                  <div className="p-2 bg-white rounded border border-amber-100">
-                    <strong>Security Audit Tracker:</strong> Immutable chronological action logger
-                  </div>
-                  <div className="p-2 bg-white rounded border border-amber-100">
-                    <strong>Auth & Session Manager:</strong> Student & Admin permission enforcement
+            {isAdmin && (
+              {/* Tier 2: Logic */}
+              <div className="bg-amber-50/50 border-2 border-amber-200 rounded-xl p-5 flex flex-col justify-between">
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-amber-900 mb-1">Tier 2</div>
+                  <h4 className="font-bold text-slate-900 text-base mb-3">Service & Matching Engine</h4>
+                  <div className="space-y-2 text-xs text-slate-700">
+                    <div className="p-2 bg-white rounded border border-amber-100">
+                      <strong>Rule-Based Matcher:</strong> Category (35%), color (15%), location (20%), token overlap (20%), dates (10%)
+                    </div>
+                    <div className="p-2 bg-white rounded border border-amber-100">
+                      <strong>Claims State Machine:</strong> Pending → Approved / Rejected → Handed Over
+                    </div>
+                    <div className="p-2 bg-white rounded border border-amber-100">
+                      <strong>Security Audit Tracker:</strong> Immutable chronological action logger
+                    </div>
+                    <div className="p-2 bg-white rounded border border-amber-100">
+                      <strong>Auth & Session Manager:</strong> Student & Admin permission enforcement
+                    </div>
                   </div>
                 </div>
+                <div className="mt-4 pt-3 border-t border-amber-200 text-[11px] text-amber-800 font-medium">
+                  Logic: Rule-based heuristic scoring (No AI hallucination)
+                </div>
               </div>
-              <div className="mt-4 pt-3 border-t border-amber-200 text-[11px] text-amber-800 font-medium">
-                Logic: Rule-based heuristic scoring (No AI hallucination)
-              </div>
-            </div>
+  
+  
+            )}
 
             {/* Tier 3: Storage */}
             <div className="bg-emerald-50/50 border-2 border-emerald-200 rounded-xl p-5 flex flex-col justify-between">
